@@ -1,0 +1,83 @@
+{
+    "nodes": {
+        "post": {
+            "id": "post_id",
+            "title": "post_title",
+            "time": "post_created_utc"
+        },
+        "author": {
+            "name": "author"
+        },
+        "comment": {
+            "id": "comment_id",
+            "body": "comment_body",
+            "time": "comment_created_utc",
+            "parent_id": "comment_parent_id"
+        },
+        "subreddit": {
+            "id": "subreddit_id",
+            "title": "subreddit"
+        }
+    },
+    "edges": [
+        [
+            "post",
+            "comment",
+            "comments"
+        ],
+        [
+            "post",
+            "author",
+            "posts"
+        ],
+        [
+            "post",
+            "subreddit",
+            "posts"
+        ],
+        [
+            "comment",
+            "author",
+            "comments"
+        ],
+        [
+            "comment",
+            "comment",
+            "comments"
+        ]
+    ],
+    "main_node_name": "post",
+    "node_to_calculate_repitition": "comment",
+    "emb": {
+        "post": {
+            "title": "XLNetTokenizer",
+            "min_number_of_words": 1
+        },
+        "comment": {
+            "body": "XLNetTokenizer",
+            "min_number_of_words": 1
+        },
+        "subreddit": {
+            "title": "XLNetTokenizer",
+            "min_number_of_words": 1
+        },
+        "author": {
+            "name": "XLNetTokenizer",
+            "min_number_of_words": 1
+        }
+    },
+    "date_range": {
+        "train_range": [
+            1293924080,
+            1293934237
+        ],
+        "valid_range": [
+            1293934237,
+            1293939316
+        ],
+        "test_range": [
+            1293939316,
+            1293944394
+        ]
+    }
+}
