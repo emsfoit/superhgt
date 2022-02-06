@@ -52,13 +52,33 @@ More info coming soon...
 
 
 
-Install Torch
-
-pip3 install torch==1.10.1+cu113 torchvision==0.11.2+cu113 torchaudio==0.10.1+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
-
-Install torch geometric
-
-pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.10.0+cu113.html
 
 
-from absl import app
+## Installation
+Tested with python version 3.7.3
+
+
+create a new envirmopent
+
+``` python3 -m venv venv ```
+
+then select it as the source of the project
+
+``` source venv/bin/activate ```
+
+Install the requirement.txt
+
+``` pip install -r requirements.txt ```
+
+Finally install Torch tools, if your device support cuda 11.3 run the following commands otherewise check pytorch [website](https://pytorch.org/get-started/locally/) and torch [geomeetrich](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html)
+
+
+
+``` pip install torch==1.10.2+cu113 torchvision==0.11.3+cu113 torchaudio==0.10.2+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html ``` 
+
+
+```  pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.10.0+cu113.html ``` 
+
+
+
+
