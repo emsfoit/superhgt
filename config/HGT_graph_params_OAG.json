@@ -4,7 +4,7 @@
             "df": "papers_venues",
             "features": {
                 "id": "paper_id",
-                "title": "paper_title",
+                "title": "normalized_title",
                 "time": "publish_year"
             },
             "parent": {

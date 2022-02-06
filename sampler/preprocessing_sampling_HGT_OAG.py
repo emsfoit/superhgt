@@ -36,12 +36,12 @@ def load_args(argv=None):
         dict: data which contains all the IO data
     """
     parser = ap.ArgumentParser()
-    parser.add_argument('--sample_size_main_file', type=int, default=30,
+    parser.add_argument('--sample_size_main_file', type=int, default=50000,
                         help='number of samples')
-    parser.add_argument('--input_dir', type=str, default='OAG/dataset/raw_data/',
-                        help='The path of raw data.')
-    parser.add_argument('--output_dir', type=str, default='OAG/dataset/graph_input_data/',
-                        help='The path for storing the preprocessed data.')
+    parser.add_argument('--input_dir', type=str, default='dataset/raw_data/',
+                        help='The address of raw data.')
+    parser.add_argument('--output_dir', type=str, default='dataset/output/',
+                        help='The address for storing the preprocessed data.')
     parser.add_argument('--time', type=ast.literal_eval, default=[{'min_time': 2000, 'max_time': 2019}],
                         help='time range')
     parser.add_argument('--compress', type=bool, default=False,
@@ -235,7 +235,7 @@ def main(argv):
     end_time = time.time()
     time_elapsed = (end_time - start_time)
     print("done processing fields after: ", time_elapsed, "seconds")
-    del paper_fields
+    del fields_h
 
     start_time = time.time()
     print("############################")
@@ -266,8 +266,8 @@ def main(argv):
     affiliations = affiliations[affiliations['affiliation_id'].isin(
         paper_author_affiliation['affiliation_id'])]
     venues = venues[venues['venue_id'].isin(papers['venue_id'])]
-    fields = fields[fields['field_id'].isin(fields_h['field_id']) | fields['field_id'].isin(fields_h['field_parent_id'])]
-    del seq, vfi_vector, paper_author_affiliation, fields_h
+    fields = fields[fields['field_id'].isin(paper_fields['field_id'])]
+    del seq, vfi_vector, paper_author_affiliation
     save_data(affiliations, 'affiliations.tsv', data)
     save_data(venues, 'venues.tsv', data)
     save_data(fields, 'fields.tsv', data)
