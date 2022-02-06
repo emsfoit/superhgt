@@ -15,7 +15,7 @@ import transformers as tr
 import networkx as nx
 from collections import defaultdict, Counter
 from scipy.sparse import coo_matrix
-from graph.utils.utils import convert_series_to_array, normalize
+from utils.utils import convert_series_to_array, normalize
 
 
 class HGTGraph:

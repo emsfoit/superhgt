@@ -1,6 +1,17 @@
 import numpy as np
 import scipy.sparse as sp
 import torch
+import json
+import os
+import glob
+import dill
+
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+import seaborn as sns
+import pandas as pd
+import networkx as nx
+from numpy import linalg
 
 def dcg_at_k(r, k):
     r = np.asfarray(r)[:k]
@@ -68,3 +79,35 @@ def feature_OAG(layer_data, graph):
         if _type == 'paper':
             texts = np.array(list(graph.node_feature[_type].loc[idxs, 'title']), dtype=np.str)
     return feature, times, indxs, texts
+
+
+
+def get_files_into_dict(dir, sep=',', dtype=str):
+    """ returns a dict of dataframes with file names 
+
+    Parameters
+    ----------
+    dir : str
+        directory of the files 
+    sep : str
+        features sep in the input files (default = ",")
+
+    Returns
+    -------
+    dict_dfs
+        a dict of dataframes: {file_name1: df1, file_name2: df2, ...}
+    """
+
+    files = glob.glob(dir + "/*")
+    dict_dfs = {}
+    for f in files:
+        df = pd.read_csv(f, sep=sep, dtype=dtype)
+        dict_dfs[os.path.basename(f).split(".")[0]] = df
+
+    return dict_dfs
+
+
+def convert_series_to_array(x, sep=' ', dtype='<U9'):
+    array = np.array(x.split(sep)).astype(float)
+    array = np.around(array, decimals=6).astype(dtype)
+    return array
