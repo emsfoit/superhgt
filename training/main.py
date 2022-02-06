@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(
     description='Training GNN on main_node - sub_node classification task')
 
 """Dataset arguments"""
-parser.add_argument('--graph_dir', type=str, default='graphs/OAG_graph.pk',
+parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph_s.pk',
                     help='The address of preprocessed graph.')
 parser.add_argument('--model_dir', type=str, default='output',
                     help='The address for storing the models and optimization results.')
@@ -40,7 +40,7 @@ parser.add_argument('--main_node', type=str, default='paper',
                     help='The name of the main node in the graph')
 parser.add_argument('--predicted_node_name', type=str, default='field',
                     help='The name of the node that its values to be predicted')
-parser.add_argument('--edge_name', type=str, default='paper-field_L0',
+parser.add_argument('--edge_name', type=str, default='paper-field_L2',
                     help='The name of edge')
 parser.add_argument('--exract_attention', type=bool, default=False,
                     help='extract the attention lists')
