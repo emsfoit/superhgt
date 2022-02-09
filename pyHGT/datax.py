@@ -115,23 +115,28 @@ class HGTGraph:
             return
 
         self.graph_data = defaultdict(lambda: {})
-        self.G = nx.Graph()
+        self.G = nx.DiGraph()
         self.load_graph_data()
         self.add_nodes()
         self.add_edges()
         self.pass_nodes_info()
         self.pass_nodes_emb()
-        
-        for node, data in self.graph_data.items():
-            if type(data) is dict:
-                self.graph_data[node] = self.get_data(node)
 
-        for node in self.graph_data:
-            self.graph_data[node]['id'] = self.graph_data[node]['id'].astype(
-                int)
-            self.graph_data[node] = self.graph_data[node].set_index('id')
-            if 'repetition' not in self.graph_data[node].columns:
-                self.graph_data[node]['repetition'] = 0
+        # define graph meta
+        self.G.graph.weight = get_weights(self.G)
+        self.G.graph.node_types = get_types(self.G)
+        self.G.graph.meta = get_meta_graph(self.G)
+
+        # for node, data in self.graph_data.items():
+        #     if type(data) is dict:
+        #         self.graph_data[node] = self.get_data(node)
+
+        # for node in self.graph_data:
+        #     self.graph_data[node]['id'] = self.graph_data[node]['id'].astype(
+        #         int)
+        #     self.graph_data[node] = self.graph_data[node].set_index('id')
+        #     if 'repetition' not in self.graph_data[node].columns:
+        #         self.graph_data[node]['repetition'] = 0
 
     def load_graph_data(self):
         """ Setup graph structure and add embeddings for nodes """
@@ -166,6 +171,7 @@ class HGTGraph:
                                              min_number_of_words=self.emb[node]['min_number_of_words'],
                                              model=self.emb[node]['model'])
             self.graph_data[node] = node_data
+        print("HI")
 
     def add_node_emb(self,
                      node,
@@ -207,32 +213,25 @@ class HGTGraph:
 
         print(f'.... Adding embeddings for {node}:{feature}')
         # TODO: find a faster way to calculate embeddings
+        i = 0
         for key, value in node_data.items():
             try:
-                input_ids = torch.tensor(
-                    [tokenizer.encode(value[feature])]).to(self.device)[:, :64]
-                if len(input_ids[0]) < min_number_of_words:
-                    continue
-                all_hidden_states, all_attentions = model(input_ids)[-2:]
-                rep = (all_hidden_states[-2][0] * all_attentions[-2]
-                       [0].mean(dim=0).mean(dim=0).view(-1, 1)).sum(dim=0)
-                value[emb_name] = rep.tolist()
+                # input_ids = torch.tensor(
+                #     [tokenizer.encode(value[feature])]).to(self.device)[:, :64]
+                # if len(input_ids[0]) < min_number_of_words:
+                #     continue
+                # all_hidden_states, all_attentions = model(input_ids)[-2:]
+                # rep = (all_hidden_states[-2][0] * all_attentions[-2]
+                #        [0].mean(dim=0).mean(dim=0).view(-1, 1)).sum(dim=0)
+                i = i +1
+                value[emb_name] = i
             except Exception as e:
                 print(e)
         return node_data
 
     def add_nodes(self):
         """ Add nodes to graph """
-        print(".. Adding nodes to graph")
-        for node in self.graph_data:
-            print(f'.... > {node}')
-            for key, features in self.graph_data[node].items():
-                attrs = ''
-                for attr in [str(key)+' = "'+str(value)+'"' for key, value in features.items()]:
-                    attrs = attrs + attr + ','
-                attrs = attrs[:-1].replace('\n', ' ')
-                code = f'self.G.add_node({key}, {attrs})'
-                exec(code)
+        self.G.add_nodes_from([(f'{features["type"]}_{key}', features) for node in self.graph_data  for key, features in self.graph_data[node].items()])
 
     def add_edges(self):
         """ Connect nodes """
@@ -263,48 +262,36 @@ class HGTGraph:
             print(f'.... > {edge}: {fields}')
 
             df = input_df[fields].drop_duplicates()
+            df['edge_type'] = f'{source}_{target}_' + df[edge_type_feature] if edge_type_feature else f'{source}_{target}'
+            df['weight'] = None if not weight else pd.to_numeric(df[weight])
+            df = df[[source_id, target_id, 'weight', 'edge_type']]
 
-            if weight and edge_type_feature:
-                result = [self.G.add_edge(str(row[0]), str(row[1]),
-                                          weight=int(row[2]),
-                                          edge_type=f'{source}-{target}_{row[3]}')
-                          for row in df[fields].to_numpy()]
-            elif weight and not edge_type_feature:
-                result = [self.G.add_edge(str(row[0]), str(row[1]),
-                                          weight=int(row[2]),
-                                          edge_type=f'{source}-{target}')
-                          for row in df[fields].to_numpy()]
-            elif not weight and edge_type_feature:
-                result = [self.G.add_edge(str(row[0]), str(row[1]),
-                                          weight=None,
-                                          edge_type=f'{source}-{target}_{row[2]}')
-                          for row in df[fields].to_numpy()]
-            else:
-                result = [self.G.add_edge(str(row[0]), str(row[1]),
-                                          weight=None,
-                                          edge_type=f'{source}-{target}')
-                          for row in df[fields].to_numpy()]
-            del result
+            self.G.add_edges_from([
+                    (f"{source}_{row[0]}", f"{target}_{row[1]}", {'weight': row[2], 'edge_type': row[3]}) 
+                    for row in df.to_numpy()
+                    if f"{source}_{row[0]}" in self.G.nodes and f"{target}_{row[1]}" in self.G.nodes  
+            ])
+            self.G.add_edges_from([
+                (f"{target}_{row[1]}", f"{source}_{row[0]}" , {'weight': row[2], 'edge_type': f'rev_{row[3]}'})
+                for row in df.to_numpy()
+                if f"{source}_{row[0]}" in self.G.nodes and f"{target}_{row[1]}" in self.G.nodes  
+            ])
+        print("Edges building done")
 
     def pass_nodes_info(self):
+        # TODO make it faster
         """ Calculate main node info and pass it to other nodes """
-        print(f'.. Calculate {self.main_node} info as node attribute')
-        main_node_ids = self.get_data(self.main_node)[['id']]
-        node_repetition_ids = self.get_data(self.node_to_calculate_repitition)[
-            'id'].to_list()
-        temp = [self.get_node_repetition(int(row[0]), node_repetition_ids, is_main_node=True) 
-                for row in main_node_ids.to_numpy()]
-        del temp
+        
+        main_node_ids = self.get_data(self.main_node).index.to_list()
+        node_repetition_ids = self.get_data(self.node_to_calculate_repitition).index.to_list() if self.main_node != self.node_to_calculate_repitition else main_node_ids
+        
+        for id in main_node_ids: self.get_node_repetition(id, node_repetition_ids, is_main_node=True)
 
         for node in self.nodes:
-            if node == self.main_node:
-                continue
-            print(f'.... > Passing info from {self.main_node} to {node}')
-            node_ids = self.get_data(node)[['id']]
-            main_node_ids = self.get_data(self.main_node)['id'].to_list()
-            temp = [self.get_node_repetition(
-                int(row[0]), main_node_ids) for row in node_ids.to_numpy()]
-            del temp
+            if node != self.main_node:
+                print(f'.... > Passing info from {self.main_node} to {node}')
+                node_ids = self.get_data(node).index.to_list()
+                for id in node_ids: self.get_node_repetition(id, main_node_ids)
 
     def get_node_repetition(self, node_id, node_repetition_ids, is_main_node=False):
         """ Get node repetition from another node 
@@ -317,16 +304,18 @@ class HGTGraph:
         is_main_node: bool
             if it is a main node (default: False)
         """
-        connected_nodes = np.array(
-            [edge[1] for edge in self.G.edges(str(node_id))], dtype=str)
-        link_ids = list(set(connected_nodes) & set(node_repetition_ids))
+        # TODO where should we use rev and where we should not
+        directed_connected_nodes = list(self.G.neighbors(node_id))
+        # connected_nodes = list(nx.all_neighbors(self.G, node_id))
+        link_ids = list(set(directed_connected_nodes) & set(node_repetition_ids))
         if is_main_node:
             self.G.nodes[node_id]['repetition'] = len(link_ids)
         else:
             repetition = 0
             for id in link_ids:
-                repetition += self.G.nodes[int(id)]['repetition']
-                self.G.nodes[node_id]['repetition'] = repetition
+                repetition += self.G.nodes[id]['repetition']
+            self.G.nodes[node_id]['repetition'] = repetition
+
 
     def get_data(self, node_type, data_type='dataframe'):
         """ Get data of specific node
@@ -359,15 +348,20 @@ class HGTGraph:
         # Pass embeddings to nodes that are directly connected to main node"""
         print(f'.. Passing embeddings from {self.main_node}')
         main_node_data = self.get_data(self.main_node)
-        main_node_data['emb'] = main_node_data['emb'].str[1:-1]
-        main_node_data['emb'] = main_node_data.apply(
-            lambda x: convert_series_to_array(x['emb'], sep=',', dtype=float), axis=1)
+        # main_node_data['emb'] = main_node_data['emb'].str[1:-1]
+        main_node_data['emb'] = main_node_data['emb']
+        # main_node_data['emb'] = main_node_data.apply(
+        #     lambda x: convert_series_to_array(x['emb'], sep=',', dtype=float), axis=1)
 
         for node in self.nodes:
-            if node in [self.main_node] + list(self.nodes_not_direct_with_main):
-                continue
-            print(f'.... > to {node}')
-            self.get_emb(node, self.main_node, main_node_data)
+            if node in list(self.nodes_not_direct_with_main):
+                for edge in self.edge_emb:
+                  if edge[0] == node:
+                    print(f'.... > to {node} via {edge[1]}')
+                    self.get_emb(node, edge[1], self.graph_data[edge[1]])
+            elif node not in [self.main_node]:
+                print(f'.... > to {node}')
+                self.get_emb(node, self.main_node, main_node_data)
 
         # Pass embeddings to nodes that are not directly connected to main node"""
         for node in self.nodes_not_direct_with_main:
@@ -387,9 +381,9 @@ class HGTGraph:
         """
         embeddings = np.array(list(node_with_emb_data['emb']))
         node_data = self.get_data(node)
-        node_ids = node_data['id'].astype(int).to_list()
-        node_pairs = [list(key) for key, value in nx.get_edge_attributes(self.G, 'weight').items(
-        ) if int(value if value is not None else 0) <= self.test_bar and (int(key[0]) in node_ids or int(key[1]) in node_ids)]
+        node_ids = node_data.index.to_list()
+        node_pairs = [list(key) for key, value in nx.get_edge_attributes(self.G, 'weight').items()
+                                if int(value if value is not None else 0) <= self.test_bar and (key[0] in node_ids or key[1] in node_ids)]
         node_pairs = self.get_hash_ids(node_pairs, node_with_emb, node)
         node_pairs = np.array(node_pairs).T
         edge_count = node_pairs.shape[1]
@@ -402,6 +396,11 @@ class HGTGraph:
         out = m.dot(embeddings)
         node_data['emb'] = list(out)
         self.graph_data[node] = node_data
+        # TODO: use id for x and embedding for y
+        nodes_emb = {
+            x:y for x, y in node_data
+        }
+        nx.set_node_attributes(self.G, nodes_emb, 'emb')
 
     def get_hash_ids(self, node_pairs, node1, node2):
         pairs = pd.DataFrame(node_pairs, columns=['id1', 'id2'])
@@ -477,7 +476,7 @@ def get_weights(G):
         weights[value] = True
     return weights
 
-def feature_hgt(layer_data, graph, graph_params):
+def feature_OAG(layer_data, graph, graph_params):
     feature = {}
     weights = {}
     indxs = {}
@@ -507,7 +506,7 @@ def feature_hgt(layer_data, graph, graph_params):
     return feature, weights, indxs, texts
 
 
-def sample_subgraph(graph, edge_list, weight_range, graph_params, sampled_depth=2, sampled_number=8, inp=None, feature_extractor=feature_hgt):
+def sample_subgraph(graph, weight_range, graph_params, sampled_depth=2, sampled_number=8, inp=None, feature_extractor=feature_OAG):
     """
         Sample Sub-Graph based on the connection of other nodes with currently sampled nodes
         We maintain budgets for each node type, indexed by <node_id, weight>.
@@ -554,6 +553,8 @@ def sample_subgraph(graph, edge_list, weight_range, graph_params, sampled_depth=
                     budget[source_type][source_id][0] += 1. / len(sampled_ids)
                     budget[source_type][source_id][1] = source_weight
 
+    # TODO Add edge_list
+    edge_list = []
     """First adding the sampled nodes then updating budget"""
     for _type in inp:
         for _id, _weight in inp[_type]:

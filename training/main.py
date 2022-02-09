@@ -14,7 +14,7 @@ import time
 import multiprocessing as mp
 import numpy as np
 import torch.nn as nn
-import dill
+import networkx as nx
 from pyHGT.data import *
 from pyHGT.model import GNN, Classifier
 from pyHGT.attention import map_attention_list
@@ -90,18 +90,19 @@ args = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-graph = dill.load(open(args.graph_dir, 'rb'))
+# replace with read gRAPH
+graph = nx.read_gpickle(args.graph_dir)
 
 with open(args.graph_params_dir) as json_file:
     graph_params = json.load(json_file)
 
 weight_thresholds = graph_params['weight_split_range']['valid_range']
 
-train_range = {w: True for w in graph.weights if w !=
+train_range = {w: True for w in graph.graph['weights'] if w !=
                None and w < weight_thresholds[0]}
-valid_range = {w: True for w in graph.weights if w !=
+valid_range = {w: True for w in graph.graph['weights'] if w !=
                None and w >= weight_thresholds[0] and w <= weight_thresholds[1]}
-test_range = {w: True for w in graph.weights if w !=
+test_range = {w: True for w in graph.graph['weights'] if w !=
               None and w > weight_thresholds[1]}
 
 rev_edge_name = f'rev_{args.edge_name}'
