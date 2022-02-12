@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(
     description='Training GNN on main_node - sub_node classification task')
 
 """Dataset arguments"""
-parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph_s.pk',
+parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph.pk',
                     help='The address of preprocessed graph.')
 parser.add_argument('--model_dir', type=str, default='output',
                     help='The address for storing the models and optimization results.')
@@ -40,7 +40,7 @@ parser.add_argument('--main_node', type=str, default='paper',
                     help='The name of the main node in the graph')
 parser.add_argument('--predicted_node_name', type=str, default='field',
                     help='The name of the node that its values to be predicted')
-parser.add_argument('--edge_name', type=str, default='paper-field_L2',
+parser.add_argument('--edge_name', type=str, default='paper_field_L2',
                     help='The name of edge')
 parser.add_argument('--exract_attention', type=bool, default=False,
                     help='extract the attention lists')
@@ -108,8 +108,10 @@ test_range = {w: True for w in graph.graph['weights'] if w !=
 rev_edge_name = f'rev_{args.edge_name}'
 
 """cand_list stores all the sub-nodes, which is the classification domain."""
-cand_list = list(graph.edge_list[args.predicted_node_name]
-                 [args.main_node][args.edge_name].keys())
+# selected_edges = [(u,v) for u,v,e in graph.edges(data=True) if e['edge_type'] == args.edge_name]
+cand_list = [u for u,v,e in graph.edges(data=True) if e['edge_type'] == rev_edge_name]
+# cand_list = list(graph.edge_list[args.predicted_node_name]
+#                  [args.main_node][args.edge_name].keys())
 
 if not args.multi_lable_task:
     """
@@ -199,32 +201,32 @@ test_pairs = {}
 # source node: venue - target node: paper
 # pairs = {paper_id: [venue_id, year], ....}
 """Prepare all the source nodes (sub-nodes) associated with each target node (main-node) as dict"""
-for target_id in graph.edge_list[args.main_node][args.predicted_node_name][rev_edge_name]:
-    for source_id in graph.edge_list[args.main_node][args.predicted_node_name][rev_edge_name][target_id]:
-        _weight = graph.edge_list[args.main_node][args.predicted_node_name][rev_edge_name][target_id][source_id]
-        if not args.multi_lable_task:
-            if _weight in train_range:
-                if target_id not in train_pairs:
-                    train_pairs[target_id] = [source_id, _weight]
-            elif _weight in valid_range:
-                if target_id not in valid_pairs:
-                    valid_pairs[target_id] = [source_id, _weight]
-            else:
-                if target_id not in test_pairs:
-                    test_pairs[target_id] = [source_id, _weight]
+selected_edges = [(u, v, e['weight']) for u,v,e in graph.edges(data=True) if e['edge_type'] == rev_edge_name]
+if not args.multi_lable_task:
+    for target_id, source_id, _weight in selected_edges:
+        if _weight in train_range:
+            if target_id not in train_pairs:
+                train_pairs[target_id] = [source_id, _weight]
+        elif _weight in valid_range:
+            if target_id not in valid_pairs:
+                valid_pairs[target_id] = [source_id, _weight]
         else:
-            if _weight in train_range:
-                if target_id not in train_pairs:
-                    train_pairs[target_id] = [[], _weight]
-                train_pairs[target_id][0] += [source_id]
-            elif _weight in valid_range:
-                if target_id not in valid_pairs:
-                    valid_pairs[target_id] = [[], _weight]
-                valid_pairs[target_id][0] += [source_id]
-            else:
-                if target_id not in test_pairs:
-                    test_pairs[target_id] = [[], _weight]
-                test_pairs[target_id][0] += [source_id]
+            if target_id not in test_pairs:
+                test_pairs[target_id] = [source_id, _weight]
+else:
+    for target_id, source_id, _weight in selected_edges:
+        if _weight in train_range:
+            if target_id not in train_pairs:
+                train_pairs[target_id] = [[], _weight]
+            train_pairs[target_id][0] += [source_id]
+        elif _weight in valid_range:
+            if target_id not in valid_pairs:
+                valid_pairs[target_id] = [[], _weight]
+            valid_pairs[target_id][0] += [source_id]
+        else:
+            if target_id not in test_pairs:
+                test_pairs[target_id] = [[], _weight]
+            test_pairs[target_id][0] += [source_id]
 
 np.random.seed(43)
 """Only train and valid with a certain percentage of data, if necessary."""
@@ -235,10 +237,11 @@ sel_valid_pairs = {p: valid_pairs[p] for p in np.random.choice(list(
 # there is no sel_test_paris here as it is not costy whatever size it has
 
 """Initialize GNN (model is specified by conv_name) and Classifier"""
-gnn = GNN(in_dim=len(graph.node_feature[args.main_node]['emb'].values[0]) + 401,
+in_dim = len(graph.node_feature[args.main_node]['emb'].values[0]) + 401
+gnn = GNN(in_dim=in_dim,
           n_hid=args.n_hid,
-          num_types=len(graph.get_types()),
-          num_relations=len(graph.get_meta_graph()) + 1,
+          num_types=len(graph.graph['node_types']),
+          num_relations=len(graph.graph['meta']) + 1,
           n_heads=args.n_heads,
           n_layers=args.n_layers,
           dropout=args.dropout,

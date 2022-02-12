@@ -123,9 +123,10 @@ class HGTGraph:
         self.pass_nodes_emb()
 
         # define graph meta
-        self.G.graph.weight = get_weights(self.G)
-        self.G.graph.node_types = get_types(self.G)
-        self.G.graph.meta = get_meta_graph(self.G)
+        self.G.graph['weights'] = get_weights(self.G)
+        self.G.graph['node_types'] = get_types(self.G)
+        self.G.graph['meta'] = get_meta_graph(self.G)
+        self.G.graph['main_node_embedding_length'] = 7016
 
         # for node, data in self.graph_data.items():
         #     if type(data) is dict:
@@ -389,6 +390,15 @@ class HGTGraph:
         edge_count = node_pairs.shape[1]
         v = np.ones(edge_count)
 
+        # # Constructing a matrix using ijv format
+        # row  = np.array([0, 3, 1, 0])
+        # col  = np.array([0, 3, 1, 2])
+        # data = np.array([4, 5, 7, 9])
+        # coo_matrix((data, (row, col)), shape=(4, 4)).toarray()
+        # array([[4, 0, 9, 0],
+        #     [0, 7, 0, 0],
+        #     [0, 0, 0, 0],
+        #     [0, 0, 0, 5]])
         m = normalize(coo_matrix((v, node_pairs),
                                  shape=(len(node_ids),
                                         len(node_with_emb_data))))
@@ -397,10 +407,14 @@ class HGTGraph:
         node_data['emb'] = list(out)
         self.graph_data[node] = node_data
         # TODO: use id for x and embedding for y
+        new_node_data  = node_data[['id', 'type', 'emb']]
+        new_node_data['new_id'] = new_node_data[['type', 'id']].agg('_'.join, axis=1)
+
         nodes_emb = {
-            x:y for x, y in node_data
+            x: i for i,x in enumerate(node_ids)
         }
         nx.set_node_attributes(self.G, nodes_emb, 'emb')
+        print("HI")
 
     def get_hash_ids(self, node_pairs, node1, node2):
         pairs = pd.DataFrame(node_pairs, columns=['id1', 'id2'])
@@ -467,8 +481,7 @@ def get_types(G):
 def get_meta_graph(G):
     """ Get the types of the edges with related node types """
     edge_types = list(nx.get_edge_attributes(G, 'edge_type').values())
-    rev_edge_types = ['rev_' + item for item in list(nx.get_edge_attributes(G, 'edge_type').values())]
-    return Counter(edge_types + rev_edge_types)
+    return Counter(edge_types)
 
 def get_weights(G):
     weights = {}
@@ -487,7 +500,9 @@ def feature_OAG(layer_data, graph, graph_params):
         idxs = np.array(list(layer_data[_type].keys()))
         tims = np.array(list(layer_data[_type].values()))[:, 1]
 
-        if 'node_emb' in graph.graph_data[_type]:
+        nodes = [node for node,att in graph.nodes(data=True) if att['type'] == 'paper']
+
+        if 'node_emb' in graph.nodes[nodes[0]]: 
             feature[_type] = np.array(
                 list(graph.graph_data[_type].loc[idxs, 'node_emb']), dtype=np.float)
         else:
