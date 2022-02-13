@@ -92,6 +92,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # replace with read gRAPH
 graph = nx.read_gpickle(args.graph_dir)
+graph.graph['edge_list'] = get_edge_list(graph)
 
 with open(args.graph_params_dir) as json_file:
     graph_params = json.load(json_file)

@@ -127,6 +127,7 @@ class HGTGraph:
         self.G.graph['node_types'] = get_types(self.G)
         self.G.graph['meta'] = get_meta_graph(self.G)
         self.G.graph['main_node_embedding_length'] = 7016
+        self.G.graph['edge_list'] = get_edge_list(self.G)
 
 
     def load_graph_data(self):
@@ -409,6 +410,23 @@ def get_weights(G):
         weights[value] = True
     return weights
 
+def get_edge_list(graph):
+    edge_list = defaultdict(  # target_type
+            lambda: defaultdict(  # source_type
+                lambda: defaultdict(  # relation_type
+                    lambda: defaultdict(  # target_id
+                        lambda: defaultdict(  # source_id(
+                            lambda: int  # weight
+                        )))))
+    for u,v,e in graph.edges(data=True):
+        source_type = graph.nodes[u]['type']
+        target_type = graph.nodes[v]['type']
+        relation_type = e['edge_type']
+        weight = e['weight']
+        edge_list[source_type][target_type][relation_type][u][v] = int(weight) if weight else None
+    return edge_list
+
+
 def feature_extractor(layer_data, graph, graph_params):
     feature = {}
     weights = {}
@@ -438,120 +456,124 @@ def feature_extractor(layer_data, graph, graph_params):
     return feature, weights, indxs, texts
 
 
-def sample_subgraph(graph, weight_range, graph_params, sampled_depth=2, sampled_number=8, inp=None, feature_extractor=feature_extractor):
-    """
+def sample_subgraph(graph, weight_range, graph_params, sampled_depth = 2, sampled_number = 8, inp = None, feature_extractor = feature_extractor):
+    '''
         Sample Sub-Graph based on the connection of other nodes with currently sampled nodes
-        We maintain budgets for each node type, indexed by <node_id, weight>.
+        We maintain budgets for each node type, indexed by <node_id, time>.
         Currently sampled nodes are stored in layer_data.
-        After nodes are sampled, we construct the sampled adjacency matrix.
-    """
+        After nodes are sampled, we construct the sampled adjacancy matrix.
+    '''
     start_time = time.time()
-    layer_data = defaultdict(  # target_type
-        lambda: {}  # {target_id: [ser, weight]}
-    )
-    budget = defaultdict(  # source_type
-        lambda: defaultdict(  # source_id
-            # [sampled_score, weight]
-            lambda: [0., 0]
-        ))
-    """
+
+    layer_data  = defaultdict( #target_type
+                        lambda: {} # {target_id: [ser, time]}
+                    )
+    budget     = defaultdict( #source_type
+                                    lambda: defaultdict(  #source_id
+                                        lambda: [0., 0] #[sampled_score, time]
+                            ))
+    '''
         For each node being sampled, we find out all its neighborhood, 
         adding the degree count of these nodes in the budget.
         Note that there exist some nodes that have many neighborhoods
         (such as fields, venues), for those case, we only consider 
-    """
-    def add_budget(graph, target_id, target_weight, layer_data, budget):
-        # edges = [ graph.out_edges(target_id, data=True)]
-        # cleaned_edges = [(s, t, att) for s, t, att in edges if att['edge_type'] != "self"]
-        dict = {}
-        for s, t, att in graph.out_edges(target_id, data=True):
-            if att['edge_type'] not in dict:
-                dict[att['edge_type']] = []
-            elm = {'id': t, 'type': graph.nodes[t]['type'], 'weight': att['weight']}
-            dict[att['edge_type']].append(elm)
-
-        for relation_type in dict.keys():
-            adl = dict[relation_type]
-            if len(adl) < sampled_number:
-                samples = adl
-            else:
-                samples = np.random.choice(adl, sampled_number, replace=False)
-            for elm in samples:
-                source_weight = elm['weight']
-                if source_weight == None:
-                    source_weight = target_weight
-                if int(source_weight) > np.max(list(weight_range.keys())) or elm['id'] in layer_data[elm['type']]:
+    '''
+    def add_budget(te, target_id, target_time, layer_data, budget):
+        for source_type in te:
+            for relation_type in te[source_type]:
+                if relation_type == 'self' or target_id not in te[source_type][relation_type]:
                     continue
-                budget[elm['type']][elm['id']][0] += 1. / len(samples)
-                budget[elm['type']][elm['id']][1] = source_weight
+                if len(te[source_type][relation_type][target_id]) < sampled_number:
+                    sampled_ids = list(te[source_type][relation_type][target_id].keys())
+                else:
+                    sampled_ids = np.random.choice(list(te[source_type][relation_type][target_id].keys()), sampled_number, replace = False)
+                for source_id in sampled_ids:
+                    source_time = te[source_type][relation_type][target_id][source_id]
+                    if source_time == None:
+                        source_time = target_time
+                    if int(source_time) > np.max(list(weight_range.keys())) or source_id in layer_data[source_type]:
+                        continue
+                    budget[source_type][source_id][0] += 1. / len(sampled_ids)
+                    budget[source_type][source_id][1] = int(source_time)
 
-    """First adding the sampled nodes then updating budget"""
+    '''
+        First adding the sampled nodes then updating budget.
+    '''
     for _type in inp:
-        for _id, _weight in inp[_type]:
-            layer_data[_type][_id] = [len(layer_data[_type]), int(_weight)]
+        for _id, _time in inp[_type]:
+            layer_data[_type][_id] = [len(layer_data[_type]), _time]
     for _type in inp:
-        for _id, _weight in inp[_type]:
-            add_budget(graph, _id, int(_weight), layer_data, budget)
-    """
+        te = graph.graph['edge_list'][_type]
+        for _id, _time in inp[_type]:
+            add_budget(te, _id, _time, layer_data, budget)
+    '''
         We recursively expand the sampled graph by sampled_depth.
         Each time we sample a fixed number of nodes for each budget,
         based on the accumulated degree.
-    """
+    '''
     for layer in range(sampled_depth):
         sts = list(budget.keys())
         for source_type in sts:
-            keys = np.array(list(budget[source_type].keys()))
+            te = graph.graph['edge_list'][source_type]
+            keys  = np.array(list(budget[source_type].keys()))
             if sampled_number > len(keys):
-                """Directly sample all the nodes"""
+                '''
+                    Directly sample all the nodes
+                '''
                 sampled_ids = np.arange(len(keys))
             else:
-                """Sample based on accumulated degree"""
-                #print(type(np.array(list(budget[source_type].values()))[:, 0][0]), np.array(list(budget[source_type].values()))[:, 0][0])
-                score = np.array(list(budget[source_type].values()))[:, 0].astype(float) ** 2
+                '''
+                    Sample based on accumulated degree
+                '''
+                score = np.array(list(budget[source_type].values()))[:,0] ** 2
                 score = score / np.sum(score)
-                sampled_ids = np.random.choice(
-                    len(score), sampled_number, p=score, replace=False)
+                sampled_ids = np.random.choice(len(score), sampled_number, p = score, replace = False) 
             sampled_keys = keys[sampled_ids]
-
-            """First adding the sampled nodes then updating budget."""
+            '''
+                First adding the sampled nodes then updating budget.
+            '''
             for k in sampled_keys:
-                layer_data[source_type][k] = [
-                    len(layer_data[source_type]), budget[source_type][k][1]]
+                layer_data[source_type][k] = [len(layer_data[source_type]), budget[source_type][k][1]]
             for k in sampled_keys:
-                add_budget(graph, k, budget[source_type]
-                           [k][1], layer_data, budget)
-                budget[source_type].pop(k)
-
-    """Prepare feature, weight and adjacency matrix for the sampled graph"""
-    feature, weights, indxs, texts = feature_extractor(
-        layer_data, graph, graph_params)
-
-    edge_list = defaultdict(  # target_type
-        lambda: defaultdict(  # source_type
-            lambda: defaultdict(  # relation_type
-                lambda: []  # [target_id, source_id]
-            )))
+                add_budget(te, k, budget[source_type][k][1], layer_data, budget)
+                budget[source_type].pop(k)   
+    '''
+        Prepare feature, time and adjacency matrix for the sampled graph
+    '''
+    feature, times, indxs, texts = feature_extractor(layer_data, graph, graph_params)
+            
+    edge_list = defaultdict( #target_type
+                        lambda: defaultdict(  #source_type
+                            lambda: defaultdict(  #relation_type
+                                lambda: [] # [target_id, source_id] 
+                                    )))
     for _type in layer_data:
         for _key in layer_data[_type]:
             _ser = layer_data[_type][_key][0]
             edge_list[_type][_type]['self'] += [[_ser, _ser]]
-    """
-        Reconstruct sampled adjacency matrix by checking whether each
+    '''
+        Reconstruct sampled adjacancy matrix by checking whether each
         link exist in the original graph
-    """
-    for u,v,e in graph.edges(data=True):
-        source_type = graph.nodes[u]['type']
-        target_type = graph.nodes[v]['type']
-        if u in layer_data[source_type] and v in layer_data[target_type]:
-            relation_type = e['edge_type']
-            source_ser = layer_data[source_type][u][0]
-            target_ser = layer_data[target_type][v][0]
-            edge_list[target_type][source_type][relation_type] += [[target_ser, source_ser]]
+    '''
+    # layer_data  = target_type  {target_id: [ser(generated index), time]}
+    for target_type in graph.graph['edge_list']:
+        for source_type in graph.graph['edge_list'][target_type]:
+            for relation_type in graph.graph['edge_list'][target_type][source_type]:
+                for target_key in layer_data[target_type]:
+                    if target_key not in graph.graph['edge_list'][target_type][source_type][relation_type]:
+                        continue
+                    target_ser = layer_data[target_type][target_key][0]
+                    for source_key in graph.graph['edge_list'][target_type][source_type][relation_type][target_key]:
+                        '''
+                            Check whether each link (target_id, source_id) exist in original adjacancy matrix
+                        '''
+                        if source_key in layer_data[source_type]:
+                            source_ser = layer_data[source_type][source_key][0]
+                            edge_list[target_type][source_type][relation_type] += [[target_ser, source_ser]]
     end_time = time.time()
     time_elapsed = (end_time - start_time)
-    print("done extracting after: ", time_elapsed, "seconds")
-
-    return feature, weights, edge_list, indxs, texts
+    # print("done extracting after: ", time_elapsed, "seconds")
+    return feature, times, edge_list, indxs, texts
 
 
 def to_torch(feature, weight, edge_list, graph):
@@ -594,7 +616,7 @@ def to_torch(feature, weight, edge_list, graph):
                     """
                         Our weight ranges from 1900 - 2020, largest span is 120.
                     """
-                    edge_weight += [node_weight[tid] - node_weight[sid] + 120]
+                    edge_weight += [int(node_weight[tid]) - int(node_weight[sid]) + 120]
     node_feature = torch.FloatTensor(node_feature)
     node_type = torch.LongTensor(node_type)
     edge_weight = torch.LongTensor(edge_weight)
