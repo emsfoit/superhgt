@@ -15,7 +15,7 @@ import multiprocessing as mp
 import numpy as np
 import torch.nn as nn
 import networkx as nx
-from pyHGT.data import *
+from pyHGT.datax import *
 from pyHGT.model import GNN, Classifier
 from pyHGT.attention import map_attention_list
 from utils.utils import randint, ndcg_at_k, mean_reciprocal_rank
@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(
     description='Training GNN on main_node - sub_node classification task')
 
 """Dataset arguments"""
-parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph.pk',
+parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph20000.pk',
                     help='The address of preprocessed graph.')
 parser.add_argument('--model_dir', type=str, default='output',
                     help='The address for storing the models and optimization results.')
@@ -110,6 +110,7 @@ rev_edge_name = f'rev_{args.edge_name}'
 """cand_list stores all the sub-nodes, which is the classification domain."""
 # selected_edges = [(u,v) for u,v,e in graph.edges(data=True) if e['edge_type'] == args.edge_name]
 cand_list = [u for u,v,e in graph.edges(data=True) if e['edge_type'] == rev_edge_name]
+cand_list = list(set(cand_list))
 # cand_list = list(graph.edge_list[args.predicted_node_name]
 #                  [args.main_node][args.edge_name].keys())
 
@@ -201,7 +202,8 @@ test_pairs = {}
 # source node: venue - target node: paper
 # pairs = {paper_id: [venue_id, year], ....}
 """Prepare all the source nodes (sub-nodes) associated with each target node (main-node) as dict"""
-selected_edges = [(u, v, e['weight']) for u,v,e in graph.edges(data=True) if e['edge_type'] == rev_edge_name]
+selected_edges = [(u, v, e['weight']) for u,v,e in graph.edges(data=True) if e['edge_type'] == args.edge_name]
+
 if not args.multi_lable_task:
     for target_id, source_id, _weight in selected_edges:
         if _weight in train_range:
@@ -237,7 +239,9 @@ sel_valid_pairs = {p: valid_pairs[p] for p in np.random.choice(list(
 # there is no sel_test_paris here as it is not costy whatever size it has
 
 """Initialize GNN (model is specified by conv_name) and Classifier"""
-in_dim = len(graph.node_feature[args.main_node]['emb'].values[0]) + 401
+# TODO: make it dynamic
+# in_dim = graph.graph['main_node_embedding_length'] + 401
+in_dim = 768 + 401
 gnn = GNN(in_dim=in_dim,
           n_hid=args.n_hid,
           num_types=len(graph.graph['node_types']),
