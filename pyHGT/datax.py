@@ -426,6 +426,27 @@ def get_edge_list(graph):
         edge_list[source_type][target_type][relation_type][u][v] = int(weight) if weight else None
     return edge_list
 
+def add_fake_edges_hgt(graph, edges):
+    graph.add_edges_from([
+            (edge[0], edge[1], {'weight':None, 'edge_type': 'fake_edge'})
+            for edge in edges
+    ])
+    graph.add_edges_from([
+            (edge[1], edge[0] , {'weight':None, 'edge_type': f'rev_fake_edge'})
+            for edge in edges
+    ])
+    for edge in edges:
+        source_type = graph.nodes[edge[0]]['type']
+        target_type = graph.nodes[edge[1]]['type']
+        graph.graph['edge_list'][source_type][target_type]['fake_edge'][edge[0]][edge[1]] = None
+        graph.graph['edge_list'][target_type][source_type]['rev_fake_edge'][edge[1]][edge[0]] = None
+
+def remove_edges_hgt(graph, edges):
+    graph.remove_edges_from([(edge[0], edge[1]) for edge in edges])
+    graph.remove_edges_from([(edge[1], edge[0]) for edge in edges])
+    # Update grpah['edge_list']
+    graph.graph['edge_list'] = get_edge_list(graph)
+
 
 def feature_extractor(layer_data, graph, graph_params):
     feature = {}
@@ -463,8 +484,6 @@ def sample_subgraph(graph, weight_range, graph_params, sampled_depth = 2, sample
         Currently sampled nodes are stored in layer_data.
         After nodes are sampled, we construct the sampled adjacancy matrix.
     '''
-    start_time = time.time()
-
     layer_data  = defaultdict( #target_type
                         lambda: {} # {target_id: [ser, time]}
                     )
@@ -570,13 +589,11 @@ def sample_subgraph(graph, weight_range, graph_params, sampled_depth = 2, sample
                         if source_key in layer_data[source_type]:
                             source_ser = layer_data[source_type][source_key][0]
                             edge_list[target_type][source_type][relation_type] += [[target_ser, source_ser]]
-    end_time = time.time()
-    time_elapsed = (end_time - start_time)
-    # print("done extracting after: ", time_elapsed, "seconds")
+
     return feature, times, edge_list, indxs, texts
 
 
-def to_torch(feature, weight, edge_list, graph):
+def to_torch(feature, weight, edge_list, graph, include_fake_edges=False):
     """
         Transform a sampled sub-graph into pytorch Tensor
         node_dict: {node_type: <node_number, node_type_ID>} node_number is used to trace back the nodes in original graph.
@@ -601,6 +618,9 @@ def to_torch(feature, weight, edge_list, graph):
         node_weight += list(weight[t])
         node_type += [node_dict[t][1] for _ in range(len(feature[t]))]
     edge_dict = {elm: i for i, elm in enumerate(graph.graph['meta']) }
+    if include_fake_edges:
+        edge_dict['fake_edge'] = len(edge_dict)
+        edge_dict['rev_fake_edge'] = len(edge_dict)
     edge_dict['self'] = len(edge_dict)
 
     for target_type in edge_list:
