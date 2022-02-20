@@ -12,6 +12,7 @@ import seaborn as sns
 import pandas as pd
 import networkx as nx
 from numpy import linalg
+from time import gmtime, strftime
 
 def dcg_at_k(r, k):
     r = np.asfarray(r)[:k]
@@ -111,3 +112,13 @@ def convert_series_to_array(x, sep=' ', dtype='<U9'):
     array = np.array(x.split(sep)).astype(float)
     array = np.around(array, decimals=6).astype(dtype)
     return array
+
+
+log_file_name = "logs/{time}.txt".format(time=strftime("%m_%d__%H_%M_%S", gmtime()))
+f = open(log_file_name, "w")
+f.close()
+def logger(data):
+    print(data)
+    with open(log_file_name, "a") as file_object:
+        data = "\n {}".format(data)
+        file_object.write(data)
