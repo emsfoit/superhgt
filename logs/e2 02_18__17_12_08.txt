@@ -1,0 +1,120 @@
+
+ Namespace(batch_size=256, clip=0.25, conv_name='hgt', data_percentage=1.0, dropout=0.2, edge_name='paper_field_L2', exract_attention=False, fake_edges_percentage=0.5, graph_dir='output/graphs/OAG_graph50000.pk', graph_params_dir='config/HGT_graph_params_OAG.json', include_fake_edges=True, main_node='paper', model_dir='output', multi_lable_task=True, n_batch=32, n_epoch=30, n_heads=8, n_hid=400, n_layers=4, n_pool=4, optimizer='adamw', predicted_node_name='field', repeat=2, sample_depth=6, sample_width=128, show_tensor_board=False)
+ Counter({'paper_field_L2': 201175, 'rev_paper_field_L2': 201175, 'field_field': 139035, 'rev_field_field': 139035, 'paper_field_L1': 107099, 'rev_paper_field_L1': 107099, 'author_affiliation': 80467, 'rev_author_affiliation': 80467, 'paper_field_L3': 73602, 'rev_paper_field_L3': 73602, 'paper_field_L0': 50036, 'rev_paper_field_L0': 50036, 'paper_author_write_other': 43403, 'rev_paper_author_write_other': 43403, 'paper_author_write_first': 33370, 'rev_paper_author_write_first': 33370, 'paper_venue_Conference': 29296, 'rev_paper_venue_Conference': 29296, 'paper_author_write_last': 28867, 'rev_paper_author_write_last': 28867, 'paper_field_L4': 25110, 'rev_paper_field_L4': 25110, 'paper_venue_Journal': 19564, 'rev_paper_venue_Journal': 19564, 'paper_field_L5': 15092, 'rev_paper_field_L5': 15092, 'rev_paper_paper': 12975, 'paper_paper': 12845, 'paper_venue_Repository': 1134, 'rev_paper_venue_Repository': 1134, 'paper_venue_Patent': 5, 'rev_paper_venue_Patent': 5})
+ GNN configuration: 
+ in_dim = 1169, n_hid = 400,              num_types = 5, num_relations = 35,             n_heads = 8, n_layers = 4, dropout = 0.2
+ Data Preparation: 18.8s
+ UPDATE!!!
+ Epoch: 1 (44.8s)  LR: 0.00060 Train Loss: 6.54  Valid Loss: 6.31  Valid NDCG: 0.2160
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 2 (38.7s)  LR: 0.00070 Train Loss: 5.94  Valid Loss: 6.31  Valid NDCG: 0.2192
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 3 (40.0s)  LR: 0.00078 Train Loss: 5.69  Valid Loss: 6.04  Valid NDCG: 0.2634
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 4 (39.5s)  LR: 0.00086 Train Loss: 5.49  Valid Loss: 6.03  Valid NDCG: 0.2920
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 5 (38.6s)  LR: 0.00092 Train Loss: 5.31  Valid Loss: 5.74  Valid NDCG: 0.2998
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 6 (39.3s)  LR: 0.00097 Train Loss: 5.08  Valid Loss: 5.84  Valid NDCG: 0.3183
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 7 (39.1s)  LR: 0.00099 Train Loss: 4.90  Valid Loss: 5.65  Valid NDCG: 0.3507
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 8 (39.2s)  LR: 0.00100 Train Loss: 4.69  Valid Loss: 5.57  Valid NDCG: 0.3805
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 9 (40.0s)  LR: 0.00099 Train Loss: 4.53  Valid Loss: 5.27  Valid NDCG: 0.4077
+ Data Preparation: 1.0s
+ 4040 new edges will be added between Fields and author
+ 4267 new edges will be added between Fields and author
+ 4227 new edges will be added between Fields and author
+ 4097 new edges will be added between Fields and author
+ 4491 new edges will be added between Fields and author
+ 4219 new edges will be added between Fields and author
+ 4281 new edges will be added between Fields and author
+ 4246 new edges will be added between Fields and author
+ 4043 new edges will be added between Fields and author
+ 4086 new edges will be added between Fields and author
+ 4170 new edges will be added between Fields and author
+ 4075 new edges will be added between Fields and author
+ 4290 new edges will be added between Fields and author
+ 4444 new edges will be added between Fields and author
+ 3861 new edges will be added between Fields and author
+ 4091 new edges will be added between Fields and author
+ 4230 new edges will be added between Fields and author
+ 4253 new edges will be added between Fields and author
+ 4168 new edges will be added between Fields and author
+ 4302 new edges will be added between Fields and author
+ 3916 new edges will be added between Fields and author
+ 4318 new edges will be added between Fields and author
+ 3948 new edges will be added between Fields and author
+ 4051 new edges will be added between Fields and author
+ 3791 new edges will be added between Fields and author
+ 4039 new edges will be added between Fields and author
+ 3903 new edges will be added between Fields and author
+ 4191 new edges will be added between Fields and author
+ 4296 new edges will be added between Fields and author
+ 4203 new edges will be added between Fields and author
+ 4256 new edges will be added between Fields and author
+ 4010 new edges will be added between Fields and author
+ Epoch: 10 (1614.1s)  LR: 0.00095 Train Loss: 4.35  Valid Loss: 5.48  Valid NDCG: 0.3712
+ Data Preparation: 1.1s
+ UPDATE!!!
+ Epoch: 11 (38.0s)  LR: 0.00090 Train Loss: 4.26  Valid Loss: 5.21  Valid NDCG: 0.4132
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 12 (41.4s)  LR: 0.00083 Train Loss: 4.24  Valid Loss: 4.80  Valid NDCG: 0.4564
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 13 (41.8s)  LR: 0.00075 Train Loss: 3.95  Valid Loss: 4.81  Valid NDCG: 0.4573
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 14 (43.7s)  LR: 0.00066 Train Loss: 3.90  Valid Loss: 4.95  Valid NDCG: 0.4703
+ Data Preparation: 1.1s
+ Epoch: 15 (42.9s)  LR: 0.00056 Train Loss: 3.76  Valid Loss: 4.98  Valid NDCG: 0.4702
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 16 (43.5s)  LR: 0.00046 Train Loss: 3.70  Valid Loss: 4.89  Valid NDCG: 0.4745
+ Data Preparation: 1.0s
+ Epoch: 17 (41.9s)  LR: 0.00036 Train Loss: 3.62  Valid Loss: 5.24  Valid NDCG: 0.4431
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 18 (43.0s)  LR: 0.00027 Train Loss: 3.53  Valid Loss: 4.85  Valid NDCG: 0.4848
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 19 (42.5s)  LR: 0.00019 Train Loss: 3.46  Valid Loss: 4.70  Valid NDCG: 0.4943
+ Data Preparation: 1.0s
+ Epoch: 20 (41.7s)  LR: 0.00012 Train Loss: 3.41  Valid Loss: 4.67  Valid NDCG: 0.4897
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 21 (41.8s)  LR: 0.00006 Train Loss: 3.42  Valid Loss: 4.26  Valid NDCG: 0.5588
+ Data Preparation: 1.0s
+ Epoch: 22 (41.7s)  LR: 0.00002 Train Loss: 3.42  Valid Loss: 4.83  Valid NDCG: 0.4971
+ Data Preparation: 1.0s
+ Epoch: 23 (41.8s)  LR: 0.00000 Train Loss: 3.44  Valid Loss: 4.82  Valid NDCG: 0.4931
+ Data Preparation: 1.0s
+ Epoch: 24 (41.5s)  LR: 0.00000 Train Loss: 3.43  Valid Loss: 4.85  Valid NDCG: 0.5211
+ Data Preparation: 0.9s
+ Epoch: 25 (41.5s)  LR: 0.00003 Train Loss: 3.41  Valid Loss: 4.58  Valid NDCG: 0.5286
+ Data Preparation: 1.0s
+ Epoch: 26 (41.6s)  LR: 0.00007 Train Loss: 3.38  Valid Loss: 4.53  Valid NDCG: 0.5331
+ Data Preparation: 1.0s
+ Epoch: 27 (41.6s)  LR: 0.00012 Train Loss: 3.35  Valid Loss: 4.68  Valid NDCG: 0.5229
+ Data Preparation: 1.0s
+ Epoch: 28 (42.0s)  LR: 0.00020 Train Loss: 3.30  Valid Loss: 4.79  Valid NDCG: 0.5016
+ Data Preparation: 1.0s
+ Epoch: 29 (41.3s)  LR: 0.00028 Train Loss: 3.26  Valid Loss: 4.74  Valid NDCG: 0.5193
+ Data Preparation: 1.0s
+ Epoch: 30 (41.6s)  LR: 0.00038 Train Loss: 3.25  Valid Loss: 4.82  Valid NDCG: 0.5054
+ {'paper_author_write_first': 33370, 'paper_field_L1': 107099, 'paper_field_L2': 201175, 'paper_field_L0': 50036, 'paper_field_L3': 73602, 'paper_venue_Journal': 19564, 'rev_paper_paper': 12975, 'paper_field_L4': 25110, 'paper_author_write_last': 28867, 'paper_field_L5': 15092, 'paper_venue_Conference': 29296, 'paper_author_write_other': 43403, 'paper_paper': 12845, 'paper_venue_Repository': 1134, 'paper_venue_Patent': 5, 'rev_paper_author_write_other': 43403, 'author_affiliation': 80467, 'rev_paper_author_write_last': 28867, 'rev_paper_author_write_first': 33370, 'rev_fake_edge': 65394, 'rev_paper_venue_Conference': 29296, 'rev_paper_venue_Journal': 19564, 'rev_paper_venue_Patent': 5, 'rev_paper_venue_Repository': 1134, 'field_field': 139035, 'rev_paper_field_L3': 73602, 'rev_field_field': 139035, 'rev_paper_field_L5': 15092, 'rev_paper_field_L2': 201175, 'rev_paper_field_L4': 25110, 'rev_paper_field_L1': 107099, 'fake_edge': 65394, 'rev_paper_field_L0': 50036, 'rev_author_affiliation': 80467}
+ Last Test NDCG: 0.4859
+ Last Test MRR:  0.6723
+ Best Test NDCG: 0.4805
+ Best Test MRR:  0.6704
+ Done after 2942.1s
