@@ -17,10 +17,11 @@ import torch.nn as nn
 import networkx as nx
 from pyHGT.datax import *
 from pyHGT.model import GNN, Classifier
-from pyHGT.attention import map_attention_list
-from utils.utils import randint, ndcg_at_k, mean_reciprocal_rank
+from pyHGT.attention import *
+from utils.utils import randint, ndcg_at_k, mean_reciprocal_rank, logger
 #import torch
-#from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
+
 
 
 from warnings import filterwarnings
@@ -30,7 +31,7 @@ parser = argparse.ArgumentParser(
     description='Training GNN on main_node - sub_node classification task')
 
 """Dataset arguments"""
-parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph20000.pk',
+parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph50000.pk',
                     help='The address of preprocessed graph.')
 parser.add_argument('--model_dir', type=str, default='output',
                     help='The address for storing the models and optimization results.')
@@ -84,16 +85,27 @@ parser.add_argument('--batch_size', type=int, default=256,
                     help='Number of output nodes for training')
 parser.add_argument('--clip', type=float, default=0.25,
                     help='Gradient Norm Clipping')
+parser.add_argument('--include_fake_edges', type=bool, default=False,
+                    help='Include fake edges')
+parser.add_argument('--remove_edges', type=bool, default=True,
+                    help='remove wake edges')
+parser.add_argument('--restructure_at_epoch', type=int, default=10,
+                    help='restructure graph at after x epoch')
 
+writer = SummaryWriter()
+
+start_time = time.time()
+
+        
 args = parser.parse_args()
-#writer = SummaryWriter()
+logger(args)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # replace with read gRAPH
 graph = nx.read_gpickle(args.graph_dir)
 graph.graph['edge_list'] = get_edge_list(graph)
-
+logger(graph.graph['meta'])
 with open(args.graph_params_dir) as json_file:
     graph_params = json.load(json_file)
 
@@ -163,7 +175,7 @@ def node_classification_sample(seed, pairs, weight_range):
 
     """(4) Transform the subgraph into torch Tensor (edge_index is in format of pytorch_geometric)"""
     node_feature, node_type, edge_weight, edge_index, edge_type, node_dict, edge_dict = \
-        to_torch(feature, weights, edge_list, graph)
+        to_torch(feature, weights, edge_list, graph, args.include_fake_edges)
     """
         (5) Prepare the labels for each output target node (main-node), and their index in sampled graph.
             (node_dict[type][0] stores the start index of a specific type of nodes)
@@ -240,17 +252,21 @@ sel_valid_pairs = {p: valid_pairs[p] for p in np.random.choice(list(
 # there is no sel_test_paris here as it is not costy whatever size it has
 
 """Initialize GNN (model is specified by conv_name) and Classifier"""
-# TODO: make it dynamic
+# TODO: make in_dim dynamic
 # in_dim = graph.graph['main_node_embedding_length'] + 401
 in_dim = 768 + 401
+num_relations = len(graph.graph['meta']) + 3 if args.include_fake_edges else len(graph.graph['meta']) + 1
 gnn = GNN(in_dim=in_dim,
           n_hid=args.n_hid,
           num_types=len(graph.graph['node_types']),
-          num_relations=len(graph.graph['meta']) + 1,
+          num_relations=num_relations,
           n_heads=args.n_heads,
           n_layers=args.n_layers,
           dropout=args.dropout,
           conv_name=args.conv_name).to(device)
+logger(f"GNN configuration: \n in_dim = {in_dim}, n_hid = {args.n_hid}, \
+             num_types = {len(graph.graph['node_types'])}, num_relations = {num_relations}, \
+            n_heads = {args.n_heads}, n_layers = {args.n_layers}, dropout = {args.dropout}")
 
 classifier = Classifier(args.n_hid, len(cand_list)).to(device)
 
@@ -276,8 +292,19 @@ train_step = 1500
 pool = mp.Pool(args.n_pool)
 st = time.time()
 jobs = prepare_data(pool)
-
+edges_attentions = defaultdict( #target_type
+    lambda: defaultdict(  #source_type
+        lambda: defaultdict(  #edge_type
+            lambda: defaultdict(  #target_id
+            lambda: defaultdict(  #target_id
+                lambda: 0.0
+            )
+))))
 for epoch in np.arange(args.n_epoch) + 1:
+    if (args.include_fake_edges or args.remove_edges) and epoch == args.restructure_at_epoch + 1:
+        add_fake_edges(graph, edges_attentions) if args.include_fake_edges else remove_edges(graph, edges_attentions)
+        
+
     """Prepare Training and Validation Data"""
     train_data = [job.get() for job in jobs[:-1]]
     valid_data = jobs[-1].get()
@@ -287,16 +314,18 @@ for epoch in np.arange(args.n_epoch) + 1:
     pool = mp.Pool(args.n_pool)
     jobs = prepare_data(pool)
     et = time.time()
-    print('Data Preparation: %.1fs' % (et - st))
+    logger('Data Preparation: %.1fs' % (et - st))
 
     """Train (weight < x1)"""
     model.train()
     train_losses = []
     torch.cuda.empty_cache()
-    for _ in range(args.repeat):
+    for repeat in range(args.repeat):
         for node_feature, node_type, edge_weight, edge_index, edge_type, x_ids, ylabel, node_dict, edge_dict, indxs in train_data:
-            node_rep = gnn.forward(node_feature.to(device), node_type.to(device),
+            attention, node_rep = gnn.forward(node_feature.to(device), node_type.to(device),
                                    edge_weight.to(device), edge_index.to(device), edge_type.to(device))
+            if  (args.include_fake_edges or args.remove_edges) and epoch == args.restructure_at_epoch and repeat == args.repeat - 1:
+                handle_attention(graph, attention, edges_attentions, edge_index, node_type, node_dict, indxs)
             res = classifier.forward(node_rep[x_ids])
             if not args.multi_lable_task:
                 loss = criterion(res, ylabel.to(device))
@@ -313,16 +342,15 @@ for epoch in np.arange(args.n_epoch) + 1:
             train_losses += [loss.cpu().detach().tolist()]
             train_step += 1
             scheduler.step(train_step)
-            if args.exract_attention:
-                map_attention_list(epoch, graph, node_dict, edge_dict, indxs)
-            #writer.add_scalar("Loss/Train", loss, epoch)
             del res, loss
+    writer.add_scalar('training loss', np.average(train_losses), epoch)
+    writer.add_histogram('classifier.linear.bias', classifier.linear.bias, epoch)
 
     """Valid (x1 <= weight <= x2)"""
     model.eval()
     with torch.no_grad():
         node_feature, node_type, edge_weight, edge_index, edge_type, x_ids, ylabel, node_dict, edge_dict, indxs = valid_data
-        node_rep = gnn.forward(node_feature.to(device), node_type.to(device),
+        _, node_rep = gnn.forward(node_feature.to(device), node_type.to(device),
                                edge_weight.to(device), edge_index.to(device), edge_type.to(device))
         res = classifier.forward(node_rep[x_ids])
         if not args.multi_lable_task:
@@ -339,31 +367,32 @@ for epoch in np.arange(args.n_epoch) + 1:
                 valid_res += [ai[bi.cpu().numpy()]]
         valid_ndcg = np.average([ndcg_at_k(resi, len(resi))
                                  for resi in valid_res])
-
+        writer.add_scalar('NDCG', valid_ndcg, epoch)
+        valid_mrr = np.average(mean_reciprocal_rank(valid_res))
+        writer.add_scalar('MRR', valid_mrr, epoch)
         if valid_ndcg > best_val:
             best_val = valid_ndcg
             torch.save(model, os.path.join(
                 args.model_dir, f'{args.main_node}_{args.predicted_node_name}_{args.conv_name}'))
-            print('UPDATE!!!')
+            logger('UPDATE!!!')
 
         st = time.time()
-        print(("Epoch: %d (%.1fs)  LR: %.5f Train Loss: %.2f  Valid Loss: %.2f  Valid NDCG: %.4f") %
+        logger(("Epoch: %d (%.1fs)  LR: %.5f Train Loss: %.2f  Valid Loss: %.2f  Valid NDCG: %.4f") %
               (epoch, (st-et), optimizer.param_groups[0]['lr'], np.average(train_losses),
                loss.cpu().detach().tolist(), valid_ndcg))
         stats += [[np.average(train_losses), loss.cpu().detach().tolist()]]
-        #writer.add_scalar("Loss/Valid", loss, epoch)
-        #writer.add_scalar("Valid NDCG", valid_ndcg, epoch)
         del res, loss
     del train_data, valid_data
-# writer.flush()
 """Evaluate the trained model via test set (weight > x2)"""
+logger(dict(get_meta_graph(graph)))
 with torch.no_grad():
     test_res = []
     for _ in range(10):
         node_feature, node_type, edge_weight, edge_index, edge_type, x_ids, ylabel, node_dict, edge_dict, indxs = \
             node_classification_sample(randint(), test_pairs, test_range)
-        main_node_rep = gnn.forward(node_feature.to(device), node_type.to(device),
-                                    edge_weight.to(device), edge_index.to(device), edge_type.to(device))[x_ids]
+        _, main_node_rep = gnn.forward(node_feature.to(device), node_type.to(device),
+                                    edge_weight.to(device), edge_index.to(device), edge_type.to(device))
+        main_node_rep = main_node_rep[x_ids]
         res = classifier.forward(main_node_rep)
         for ai, bi in zip(ylabel, res.argsort(descending=True)):
             if not args.multi_lable_task:
@@ -371,9 +400,9 @@ with torch.no_grad():
             else:
                 test_res += [ai[bi.cpu().numpy()]]
     test_ndcg = [ndcg_at_k(resi, len(resi)) for resi in test_res]
-    print('Last Test NDCG: %.4f' % np.average(test_ndcg))
+    logger('Last Test NDCG: %.4f' % np.average(test_ndcg))
     test_mrr = mean_reciprocal_rank(test_res)
-    print('Last Test MRR:  %.4f' % np.average(test_mrr))
+    logger('Last Test MRR:  %.4f' % np.average(test_mrr))
 
 best_model = torch.load(os.path.join(
     args.model_dir, f'{args.main_node}_{args.predicted_node_name}_{args.conv_name}'))
@@ -384,8 +413,9 @@ with torch.no_grad():
     for _ in range(10):
         node_feature, node_type, edge_weight, edge_index, edge_type, x_ids, ylabel, node_dict, edge_dict, indxs = \
             node_classification_sample(randint(), test_pairs, test_range)
-        main_node_rep = gnn.forward(node_feature.to(device), node_type.to(device),
-                                    edge_weight.to(device), edge_index.to(device), edge_type.to(device))[x_ids]
+        _, main_node_rep = gnn.forward(node_feature.to(device), node_type.to(device),
+                                    edge_weight.to(device), edge_index.to(device), edge_type.to(device))
+        main_node_rep = main_node_rep[x_ids]
         res = classifier.forward(main_node_rep)
         for ai, bi in zip(ylabel, res.argsort(descending=True)):
             if not args.multi_lable_task:
@@ -393,6 +423,10 @@ with torch.no_grad():
             else:
                 test_res += [ai[bi.cpu().numpy()]]
     test_ndcg = [ndcg_at_k(resi, len(resi)) for resi in test_res]
-    print('Best Test NDCG: %.4f' % np.average(test_ndcg))
+    logger('Best Test NDCG: %.4f' % np.average(test_ndcg))
     test_mrr = mean_reciprocal_rank(test_res)
-    print('Best Test MRR:  %.4f' % np.average(test_mrr))
+    logger('Best Test MRR:  %.4f' % np.average(test_mrr))
+
+
+end_time = time.time()
+logger('Done after %.1fs' % (end_time-start_time))
