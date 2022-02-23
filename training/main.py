@@ -88,7 +88,7 @@ parser.add_argument('--clip', type=float, default=0.25,
 parser.add_argument('--include_fake_edges', type=bool, default=False,
                     help='Include fake edges')
 parser.add_argument('--remove_edges', type=bool, default=True,
-                    help='remove wake edges')
+                    help='remove weak edges')
 parser.add_argument('--restructure_at_epoch', type=int, default=10,
                     help='restructure graph at after x epoch')
 
@@ -296,7 +296,7 @@ edges_attentions = defaultdict( #target_type
     lambda: defaultdict(  #source_type
         lambda: defaultdict(  #edge_type
             lambda: defaultdict(  #target_id
-            lambda: defaultdict(  #target_id
+            lambda: defaultdict(  #source_id
                 lambda: 0.0
             )
 ))))
