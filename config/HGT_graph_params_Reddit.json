@@ -1,78 +1,103 @@
 {
     "nodes": {
         "post": {
-            "id": "post_id",
-            "title": "post_title",
-            "time": "post_created_utc"
+            "df": "post_author_subreddits",
+            "features": {
+                "id": "post_id",
+                "title": "post_title",
+                "time": "post_created_utc"
+            }
         },
         "author": {
-            "name": "author"
+            "df": "authors",
+            "features": {
+                "id": "author"
+            }
         },
         "comment": {
-            "id": "comment_id",
-            "body": "comment_body",
-            "time": "comment_created_utc",
-            "parent_id": "comment_parent_id"
+            "df": "comments",
+            "features": {
+                "id": "comment_id",
+                "body": "comment_body",
+                "time": "comment_created_utc",
+                "parent_id": "comment_parent_id"
+            },
+            "parent": {
+                "df": "comments",
+                "features": {
+                    "id": "comment_id",
+                    "parent_id": "comment_parent_id"
+                }
+            }
         },
         "subreddit": {
-            "id": "subreddit_id",
-            "title": "subreddit"
+            "df": "post_author_subreddits",
+            "features": {
+                "id": "subreddit_id",
+                "title": "subreddit"
+            }
         }
     },
-    "edges": [
-        [
-            "post",
-            "comment",
-            "comments"
-        ],
-        [
-            "post",
-            "author",
-            "posts"
-        ],
-        [
-            "post",
-            "subreddit",
-            "posts"
-        ],
-        [
-            "comment",
-            "author",
-            "comments"
-        ],
-        [
-            "comment",
-            "comment",
-            "comments"
-        ]
-    ],
-    "main_node_name": "post",
+    "edges": {
+        "post_author": {
+            "df": "post_author_subreddits",
+            "source": "post",
+            "target": "author"
+        },
+        "post_subreddit": {
+            "df": "post_author_subreddits",
+            "source": "post",
+            "target": "subreddit"
+        },
+        "post_comment": {
+            "df": "comments",
+            "source": "post",
+            "target": "comment"
+        },
+        "comment_comment": {
+            "df": "comments",
+            "source": "comment",
+            "target": "comment",
+            "self_edge": true
+        },
+        "author_comment": {
+            "df": "comments",
+            "source": "author",
+            "target": "comment"
+        }
+    },
+    "main_node": "post",
     "node_to_calculate_repitition": "comment",
     "emb": {
         "post": {
-            "title": "XLNetTokenizer",
+            "feature": "title",
+            "model": "XLNetTokenizer",
             "min_number_of_words": 1
         },
         "comment": {
-            "body": "XLNetTokenizer",
+            "feature": "body",
+            "model": "XLNetTokenizer",
             "min_number_of_words": 1
         },
         "subreddit": {
-            "title": "XLNetTokenizer",
-            "min_number_of_words": 1
-        },
-        "author": {
-            "name": "XLNetTokenizer",
+            "feature": "title",
+            "model": "XLNetTokenizer",
             "min_number_of_words": 1
         }
     },
-    "date_range": {
+    "weight": {
+        "df": "post_author_subreddits",
+        "features": {
+            "time": "post_created_utc"
+        }
+    },
+    "weight_split_range": {
         "train_range": [
             1293924080,
-            1293934237
+            1293930237
         ],
         "valid_range": [
-            1293934237,
+            1293930237,
             1293939316
         ],
         "test_range": [
