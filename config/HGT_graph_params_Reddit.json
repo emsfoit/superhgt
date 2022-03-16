@@ -1,108 +1,154 @@
 {
-    "nodes": {
-        "post": {
-            "df": "post_author_subreddits",
-            "features": {
-                "id": "post_id",
-                "title": "post_title",
-                "time": "post_created_utc"
-            }
-        },
-        "author": {
-            "df": "authors",
-            "features": {
-                "id": "author"
-            }
-        },
-        "comment": {
-            "df": "comments",
-            "features": {
-                "id": "comment_id",
-                "body": "comment_body",
-                "time": "comment_created_utc",
-                "parent_id": "comment_parent_id"
+   "nodes":[
+      {
+         "name":"post",
+         "df":"post_author_subreddits",
+         "features":[
+            {
+               "feature_name":"id",
+               "column_name":"post_id"
             },
-            "parent": {
-                "df": "comments",
-                "features": {
-                    "id": "comment_id",
-                    "parent_id": "comment_parent_id"
-                }
+            {
+               "feature_name":"title",
+               "column_name":"post_title"
+            },
+            {
+               "feature_name":"time",
+               "column_name":"post_created_utc"
             }
-        },
-        "subreddit": {
-            "df": "post_author_subreddits",
-            "features": {
-                "id": "subreddit_id",
-                "title": "subreddit"
+         ]
+      },
+      {
+         "name":"author",
+         "df":"authors",
+         "features":[
+            {
+               "feature_name":"id",
+               "column_name":"author"
             }
-        }
-    },
-    "edges": {
-        "post_author": {
-            "df": "post_author_subreddits",
-            "source": "post",
-            "target": "author"
-        },
-        "post_subreddit": {
-            "df": "post_author_subreddits",
-            "source": "post",
-            "target": "subreddit"
-        },
-        "post_comment": {
-            "df": "comments",
-            "source": "post",
-            "target": "comment"
-        },
-        "comment_comment": {
-            "df": "comments",
-            "source": "comment",
-            "target": "comment",
-            "self_edge": true
-        },
-        "author_comment": {
-            "df": "comments",
-            "source": "author",
-            "target": "comment"
-        }
-    },
-    "main_node": "post",
-    "node_to_calculate_repitition": "comment",
-    "emb": {
-        "post": {
-            "feature": "title",
-            "model": "XLNetTokenizer",
-            "min_number_of_words": 1
-        },
-        "comment": {
-            "feature": "body",
-            "model": "XLNetTokenizer",
-            "min_number_of_words": 1
-        },
-        "subreddit": {
-            "feature": "title",
-            "model": "XLNetTokenizer",
-            "min_number_of_words": 1
-        }
-    },
-    "weight": {
-        "df": "post_author_subreddits",
-        "features": {
-            "time": "post_created_utc"
-        }
-    },
-    "weight_split_range": {
-        "train_range": [
-            1293924080,
-            1293930237
-        ],
-        "valid_range": [
-            1293930237,
-            1293939316
-        ],
-        "test_range": [
-            1293939316,
-            1293944394
-        ]
-    }
+         ]
+      },
+      {
+         "name":"comment",
+         "df":"comments",
+         "features":[
+            {
+               "feature_name":"id",
+               "column_name":"comment_id"
+            },
+            {
+               "feature_name":"body",
+               "column_name":"comment_body"
+            },
+            {
+               "feature_name":"time",
+               "column_name":"comment_created_utc"
+            },
+            {
+               "feature_name":"parent_id",
+               "column_name":"comment_parent_id"
+            }
+         ],
+         "parent":{
+            "df":"comments",
+            "features":[
+               {
+                  "feature_name":"id",
+                  "column_name":"comment_id"
+               },
+               {
+                  "feature_name":"parent_id",
+                  "column_name":"comment_parent_id"
+               }
+            ]
+         }
+      },
+      {
+         "name":"subreddit",
+         "df":"post_author_subreddits",
+         "features":[
+            {
+               "feature_name":"id",
+               "column_name":"subreddit_id"
+            },
+            {
+               "feature_name":"title",
+               "column_name":"subreddit"
+            }
+         ]
+      }
+   ],
+   "edges":[
+      {
+         "name":"post_author",
+         "df":"post_author_subreddits",
+         "source":"post",
+         "target":"author"
+      },
+      {
+         "name":"post_subreddit",
+         "df":"post_author_subreddits",
+         "source":"post",
+         "target":"subreddit"
+      },
+      {
+         "name":"post_comment",
+         "df":"comments",
+         "source":"post",
+         "target":"comment"
+      },
+      {
+         "name":"comment_comment",
+         "df":"comments",
+         "source":"comment",
+         "target":"comment",
+         "self_edge":true
+      },
+      {
+         "name":"author_comment",
+         "df":"comments",
+         "source":"author",
+         "target":"comment"
+      }
+   ],
+   "main_node":"post",
+   "node_to_calculate_repitition":"comment",
+   "emb":[
+      {
+         "node":"post",
+         "feature":"title",
+         "model":"XLNetTokenizer",
+         "min_number_of_words":1
+      },
+      {
+         "node":"comment",
+         "feature":"body",
+         "model":"XLNetTokenizer",
+         "min_number_of_words":1
+      },
+      {
+         "node":"subreddit",
+         "feature":"title",
+         "model":"XLNetTokenizer",
+         "min_number_of_words":1
+      }
+   ],
+   "weight":{
+      "df":"post_author_subreddits",
+      "feature":"post_created_utc"
+   },
+   "weight_split_range":{
+      "train_range":{
+         "start":1293924080,
+         "end":1293930237
+      },
+      "valid_range":{
+         "start":1293930237,
+         "end":1293939316
+      },
+      "test_range":{
+         "start":1293939316,
+         "end":1293944394
+      }
+   }
 }

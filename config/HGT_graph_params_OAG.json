@@ -1,125 +1,186 @@
 {
-    "nodes": {
-        "paper": {
-            "df": "papers_venues",
-            "features": {
-                "id": "paper_id",
-                "title": "normalized_title",
-                "time": "publish_year"
+   "nodes":[
+      {
+         "name":"paper",
+         "df":"papers_venues",
+         "features":[
+            {
+               "feature_name":"id",
+               "column_name":"paper_id"
             },
-            "parent": {
-                "df": "papers_papers",
-                "features": {
-                    "id": "paper_id",
-                    "parent_id": "paper_parent_id"
-                }
+            {
+               "feature_name":"title",
+               "column_name":"normalized_title"
+            },
+            {
+               "feature_name":"time",
+               "column_name":"publish_year"
             }
-        },
-        "author": {
-            "df": "papers_authors_affiliations",
-            "features": {
-                "id": "author_id"
+         ],
+         "parent":{
+            "df":"papers_papers",
+            "features":[
+               {
+                  "feature_name":"id",
+                  "column_name":"paper_id"
+               },
+               {
+                  "feature_name":"parent_id",
+                  "column_name":"paper_parent_id"
+               }
+            ]
+         }
+      },
+      {
+         "name":"author",
+         "df":"papers_authors_affiliations",
+         "features":[
+            {
+               "feature_name":"id",
+               "column_name":"author_id"
             }
-        },
-        "venue": {
-            "df": "venues",
-            "features": {
-                "id": "venue_id",
-                "name": "venue_name",
-                "node_emb": "venue_emb"
+         ]
+      },
+      {
+         "name":"venue",
+         "df":"venues",
+         "features":[
+            {
+               "feature_name":"id",
+               "column_name":"venue_id"
             },
-            "node_emb_sep":" "
-        },
-        "field": {
-            "df": "fields",
-            "features": {
-                "id": "field_id",
-                "name": "field_name",
-                "node_emb": "field_emb"
+            {
+               "feature_name":"name",
+               "column_name":"venue_name"
             },
-            "node_emb_sep":" ",
-            "parent": {
-                "df": "fields_hierarchy",
-                "features": {
-                    "id": "field_id",
-                    "parent_id": "field_parent_id"
-                }
+            {
+               "feature_name":"node_emb",
+               "column_name":"venue_emb"
             }
-        },
-        "affiliation": {
-            "df": "affiliations",
-            "features": {
-                "id": "affiliation_id",
-                "name": "affiliation_name",
-                "node_emb": "affiliation_emb"
+         ],
+         "node_emb_sep":" "
+      },
+      {
+         "name":"field",
+         "df":"fields",
+         "features":[
+            {
+               "feature_name":"id",
+               "column_name":"field_id"
             },
-            "node_emb_sep":" "
-        }
-    },
-    "edges": {
-        "paper_paper": {
-            "df": "papers_papers",
-            "source": "paper",
-            "target": "paper",
-            "self_edge": true
-        },
-        "field_field": {
-            "df": "fields_hierarchy",
-            "source": "field",
-            "target": "field",
-            "self_edge": true
-        },
-        "paper_author": {
-            "df": "papers_authors_affiliations",
-            "source": "paper",
-            "target": "author",
-            "edge_type_feature": "author_position"
-        },
-        "paper_field": {
-            "df": "papers_fields",
-            "source": "paper",
-            "target": "field",
-            "edge_type_feature": "level"
-        },
-        "paper_venue": {
-            "df": "papers_venues",
-            "source": "paper",
-            "target": "venue",
-            "edge_type_feature": "venue_type"
-        },
-        "author_affiliation": {
-            "df": "papers_authors_affiliations",
-            "source": "author",
-            "target": "affiliation"
-        }
-    },
-    "main_node": "paper",
-    "node_to_calculate_repitition": "paper",
-    "emb": {
-        "paper": {
-            "feature":"title",
-            "model": "XLNetTokenizer",
-            "min_number_of_words": 4
-        }
-    },
-    "weight": {
-        "df": "papers_venues",
-        "features": {
-            "time": "publish_year"
-        }
-    },
-    "weight_split_range": {
-        "train_range": [
-            1900,
-            2015
-        ],
-        "valid_range": [
-            2015,
-            2016
-        ],
-        "test_range": [
-            2016,
-            2021
-        ]
-    }
+            {
+               "feature_name":"name",
+               "column_name":"field_name"
+            },
+            {
+               "feature_name":"node_emb",
+               "column_name":"field_emb"
+            }
+         ],
+         "node_emb_sep":" ",
+         "parent":{
+            "df":"fields_hierarchy",
+            "features":[
+               {
+                  "feature_name":"id",
+                  "column_name":"field_id"
+               },
+               {
+                  "feature_name":"parent_id",
+                  "column_name":"field_parent_id"
+               }
+            ]
+         }
+      },
+      {
+         "name":"affiliation",
+         "df":"affiliations",
+         "features":[
+            {
+               "feature_name":"id",
+               "column_name":"affiliation_id"
+            },
+            {
+               "feature_name":"name",
+               "column_name":"affiliation_name"
+            },
+            {
+               "feature_name":"node_emb",
+               "column_name":"affiliation_emb"
+            }
+         ],
+         "node_emb_sep":" "
+      }
+   ],
+   "edges":[
+      {
+         "name":"paper_paper",
+         "df":"papers_papers",
+         "source":"paper",
+         "target":"paper",
+         "self_edge":true
+      },
+      {
+         "name":"field_field",
+         "df":"fields_hierarchy",
+         "source":"field",
+         "target":"field",
+         "self_edge":true
+      },
+      {
+         "name":"paper_author",
+         "df":"papers_authors_affiliations",
+         "source":"paper",
+         "target":"author",
+         "edge_type_feature":"author_position"
+      },
+      {
+         "name":"paper_field",
+         "df":"papers_fields",
+         "source":"paper",
+         "target":"field",
+         "edge_type_feature":"level"
+      },
+      {
+         "name":"paper_venue",
+         "df":"papers_venues",
+         "source":"paper",
+         "target":"venue",
+         "edge_type_feature":"venue_type"
+      },
+      {
+         "name":"author_affiliation",
+         "df":"papers_authors_affiliations",
+         "source":"author",
+         "target":"affiliation"
+      }
+   ],
+   "main_node":"paper",
+   "node_to_calculate_repitition":"paper",
+   "emb":[
+      {
+         "node":"paper",
+         "feature":"title",
+         "model":"XLNetTokenizer",
+         "min_number_of_words":4
+      }
+   ],
+   "weight":{
+      "df":"papers_venues",
+      "feature":"publish_year"
+   },
+   "weight_split_range":{
+      "train_range":{
+         "start":1900,
+         "end":2015
+      },
+      "valid_range":{
+         "start":2015,
+         "end":2016
+      },
+      "test_range":{
+         "start":2016,
+         "end":2021
+      }
+   }
 }
