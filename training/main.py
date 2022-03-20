@@ -31,17 +31,17 @@ parser = argparse.ArgumentParser(
     description='Training GNN on main_node - sub_node classification task')
 
 """Dataset arguments"""
-parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph50000.pk',
+parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_grap_reddit_10000.pk',
                     help='The address of preprocessed graph.')
 parser.add_argument('--model_dir', type=str, default='output',
                     help='The address for storing the models and optimization results.')
-parser.add_argument('--graph_params_dir', type=str, default='config/HGT_graph_params_OAG.json',
+parser.add_argument('--graph_params_dir', type=str, default='config/HGT_graph_params_Reddit.json',
                     help='The address of the graph params file')
-parser.add_argument('--main_node', type=str, default='paper',
+parser.add_argument('--main_node', type=str, default='post',
                     help='The name of the main node in the graph')
-parser.add_argument('--predicted_node_name', type=str, default='field',
+parser.add_argument('--predicted_node_name', type=str, default='subreddit',
                     help='The name of the node that its values to be predicted')
-parser.add_argument('--edge_name', type=str, default='paper_field_L2',
+parser.add_argument('--edge_name', type=str, default='post_subreddit',
                     help='The name of edge')
 parser.add_argument('--exract_attention', type=bool, default=False,
                     help='extract the attention lists')
@@ -87,7 +87,7 @@ parser.add_argument('--clip', type=float, default=0.25,
                     help='Gradient Norm Clipping')
 parser.add_argument('--include_fake_edges', type=bool, default=False,
                     help='Include fake edges')
-parser.add_argument('--remove_edges', type=bool, default=True,
+parser.add_argument('--remove_edges', type=bool, default=False,
                     help='remove weak edges')
 parser.add_argument('--restructure_at_epoch', type=int, default=10,
                     help='restructure graph at after x epoch')
@@ -112,11 +112,11 @@ with open(args.graph_params_dir) as json_file:
 weight_thresholds = graph_params['weight_split_range']['valid_range']
 
 train_range = {w: True for w in graph.graph['weights'] if w !=
-               None and w < weight_thresholds[0]}
+               None and w < weight_thresholds['start']}
 valid_range = {w: True for w in graph.graph['weights'] if w !=
-               None and w >= weight_thresholds[0] and w <= weight_thresholds[1]}
+               None and w >= weight_thresholds['start'] and w <= weight_thresholds['end']}
 test_range = {w: True for w in graph.graph['weights'] if w !=
-              None and w > weight_thresholds[1]}
+              None and w > weight_thresholds['end']}
 
 rev_edge_name = f'rev_{args.edge_name}'
 
@@ -254,7 +254,8 @@ sel_valid_pairs = {p: valid_pairs[p] for p in np.random.choice(list(
 """Initialize GNN (model is specified by conv_name) and Classifier"""
 # TODO: make in_dim dynamic
 # in_dim = graph.graph['main_node_embedding_length'] + 401
-in_dim = 768 + 401
+in_dim = 768 + 768 +  1
+# TODO: make use_RTE dynamic
 num_relations = len(graph.graph['meta']) + 3 if args.include_fake_edges else len(graph.graph['meta']) + 1
 gnn = GNN(in_dim=in_dim,
           n_hid=args.n_hid,
@@ -263,7 +264,8 @@ gnn = GNN(in_dim=in_dim,
           n_heads=args.n_heads,
           n_layers=args.n_layers,
           dropout=args.dropout,
-          conv_name=args.conv_name).to(device)
+          conv_name=args.conv_name,
+          use_RTE=False).to(device)
 logger(f"GNN configuration: \n in_dim = {in_dim}, n_hid = {args.n_hid}, \
              num_types = {len(graph.graph['node_types'])}, num_relations = {num_relations}, \
             n_heads = {args.n_heads}, n_layers = {args.n_layers}, dropout = {args.dropout}")
