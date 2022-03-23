@@ -18,6 +18,9 @@ from scipy.sparse import coo_matrix
 from utils.utils import convert_series_to_array, normalize
 import time
 
+def find_in_obj(obj, att, value):
+    return next((elm for elm in obj if elm[att] == value), None)
+
 class HGTGraph:
     """
     A class to build HGT graph
@@ -65,22 +68,19 @@ class HGTGraph:
             a dict of dataframes of the input files. {file_name1: df1, file_name2: df2, ...}
         """
 
-        self.node_types = graph_params['nodes']
-        self.edge_types = graph_params['edges']
+        self.nodes = graph_params['nodes']
+        self.edges = graph_params['edges']
         self.weight = graph_params['weight']
         self.emb = graph_params['emb']
         self.main_node = graph_params['main_node']
         self.node_to_calculate_repitition = graph_params['node_to_calculate_repitition']
 
-        self.test_bar = graph_params['weight_split_range']['test_range'][0]
-        self.weight_feature_value = list(self.weight['features'].values())[0]
-        self.weight_feature_key = list(self.weight['features'].keys())[0]
-
+        # self.test_bar = graph_params['weight_split_range']['test_range'][0]
         # Nodes connected directly to main node
         self.nodes_direct_with_main = []
-        for edge_type in self.edge_types:
-            source_node = self.edge_types[edge_type]['source']
-            target_node = self.edge_types[edge_type]['target']
+        for edge in self.edges:
+            source_node = edge['source']
+            target_node = edge['target']
             if self.main_node == source_node and self.main_node != target_node:
                 self.nodes_direct_with_main.append(
                     target_node) if target_node not in self.nodes_direct_with_main else self.nodes_direct_with_main
@@ -90,15 +90,15 @@ class HGTGraph:
 
         # Nodes not directly connected to main node
         self.nodes_not_direct_with_main = list(
-            set(self.node_types) - set(self.nodes_direct_with_main) - set([self.main_node]))
+            set([node['name'] for node in self.nodes]) - set(self.nodes_direct_with_main) - set([self.main_node]))
 
         # Find routes for the nodes that not directly connected to main node to the main node
         self.edge_emb = []
         for node in self.nodes_not_direct_with_main:
-            for edge_type in self.edge_types:
-                if 'self_edge' not in self.edge_types[edge_type]:
-                    source_node = self.edge_types[edge_type]['source']
-                    target_node = self.edge_types[edge_type]['target']
+            for edge in self.edges:
+                if 'self_edge' not in edge:
+                    source_node = edge['source']
+                    target_node = edge['target']
                     if source_node == node and target_node in self.nodes_direct_with_main:
                         self.edge_emb.append([node, target_node]) if [
                             node, target_node] not in self.edge_emb else self.edge_emb
@@ -127,43 +127,40 @@ class HGTGraph:
         self.G.graph['node_types'] = get_types(self.G)
         self.G.graph['meta'] = get_meta_graph(self.G)
         self.G.graph['main_node_embedding_length'] = 7016
-        self.G.graph['edge_list'] = get_edge_list(self.G)
-
-
+        # edge_list = get_edge_list(self.G)
+        # self.G.graph['edge_list'] = edge_list
+   
     def load_graph_data(self):
         """ Setup graph structure and add embeddings for nodes """
         print(".. Importing data")
-        for node_type in self.node_types:
-            node_features = self.node_types[node_type]['features']
-            node_features_values = list(node_features.values())
-            reversed_node_features = {
-                node_features[i]: i for i in node_features}
+        for node in self.nodes:
+            node_column_features = { feature['column_name']: feature['feature_name'] for feature in node['features']}
 
-            node_file_name = self.node_types[node_type]['df']
+            node_file_name = node['df']
             node_data = self.input_dfs[node_file_name]
             node_data = node_data[node_data.columns.intersection(
-                node_features_values)].drop_duplicates()
+                node_column_features.keys())].drop_duplicates()
             node_data = node_data.rename(
-                columns=reversed_node_features).set_index('id')
+                columns=node_column_features).set_index('id')
 
             node_data['id'] = node_data.index
-            node_data['type'] = node_type
-
-            if 'node_emb' in node_features:
+            node_data['type'] = node['name']
+            
+            if 'node_emb' in node_column_features.values():
                 node_data['node_emb'] = node_data['node_emb'].astype(str)
                 node_data['node_emb'] = node_data.apply(
                     lambda x: convert_series_to_array(x['node_emb'], sep=' ',dtype=float), axis=1)
 
             node_data = node_data.to_dict('index')
 
-            if node_type in self.emb:
-               node_data = self.add_node_emb(node_type,
-                                             self.emb[node_type]['feature'],
+            node_emb_config = find_in_obj(self.emb, 'node', node['name'])
+            if node_emb_config:
+               node_data = self.add_node_emb(node['name'],
+                                             node_emb_config['feature'],
                                              node_data,
-                                             min_number_of_words=self.emb[node_type]['min_number_of_words'],
-                                             model=self.emb[node_type]['model'])
-            self.graph_data[node_type] = node_data
-        print("HI")
+                                             min_number_of_words=1,
+                                             model=node_emb_config['model'])
+            self.graph_data[node['name']] = node_data
 
     def add_node_emb(self,
                      node_type,
@@ -227,35 +224,38 @@ class HGTGraph:
     def add_edges(self):
         """ Connect nodes """
         print('.. Connecting nodes:')
-        for edge_type in self.edge_types:
-            source = self.edge_types[edge_type]['source']
-            target = self.edge_types[edge_type]['target']
-            source_id = self.node_types[source]['features']['id']
-            target_id = self.node_types[target]['features']['id']
+        for edge in self.edges:
+            source = edge['source']
+            target = edge['target']
+            source_node = find_in_obj(self.nodes, 'name', source)
+            target_node =  find_in_obj(self.nodes, 'name', target) 
+            source_id = find_in_obj(source_node['features'], 'feature_name', 'id')['column_name']
+            target_id = find_in_obj(target_node['features'], 'feature_name', 'id')['column_name']
+            input_df = self.input_dfs[edge['df']]
 
-            input_df = self.input_dfs[self.edge_types[edge_type]['df']]
-
-            if 'self_edge' in self.edge_types[edge_type] and 'parent' in self.node_types[source]:
-                target_id = self.node_types[source]['parent']['features']['parent_id']
+            if 'self_edge' in edge and  'parent' in source_node:
+                target_id = find_in_obj(source_node['parent']['features'], 'feature_name', 'parent_id')['column_name']
 
             edge_type_feature = None
-            if 'edge_type_feature' in self.edge_types[edge_type]:
-                edge_type_feature = self.edge_types[edge_type]['edge_type_feature']
+            if 'edge_type_feature' in edge:
+                edge_type_feature = edge['edge_type_feature']
 
             weight = None
-            if self.weight_feature_value in input_df.columns.tolist():
-                weight = self.weight_feature_value
+            if edge['df'] == self.weight['df']:
+                weight = self.weight['feature']
 
             fields = [source_id, target_id]
             fields += [weight] if weight is not None else []
             fields += [edge_type_feature] if edge_type_feature is not None else []
 
-            print(f'.... > {edge_type}: {fields}')
+            print(f".... > {edge['name']}: {fields}")
 
             df = input_df[fields].drop_duplicates()
             df['edge_type'] = f'{source}_{target}_' + df[edge_type_feature] if edge_type_feature else f'{source}_{target}'
             df['weight'] = None if not weight else pd.to_numeric(df[weight])
             df = df[[source_id, target_id, 'weight', 'edge_type']]
+            # extra check: In case target_id or source_id is not defined drop the row (solve reddit comment-comment error)
+            df = df.replace('', np.nan).dropna(subset=[source_id, target_id])
 
             self.G.add_edges_from([
                     (f"{source}_{row[0]}", f"{target}_{row[1]}", {'weight': row[2], 'edge_type': row[3]}) 
@@ -277,7 +277,7 @@ class HGTGraph:
         
         for id in main_node_ids: self.get_node_repetition(id, node_repetition_ids, is_main_node=True)
 
-        for node_type in self.node_types:
+        for node_type in self.nodes:
             if node_type != self.main_node:
                 print(f'.... > Passing info from {self.main_node} to {node_type}')
                 node_ids = self.get_data(node_type).index.to_list()
@@ -345,22 +345,22 @@ class HGTGraph:
         else:
             main_node_data['emb'] = main_node_data['emb']
 
-        for node in self.node_types:
-            if node in list(self.nodes_not_direct_with_main):
+        for node in self.nodes:
+            if node['name'] in list(self.nodes_not_direct_with_main):
                 for edge in self.edge_emb:
-                  if edge[0] == node:
-                    print(f'.... > to {node} via {edge[1]}')
-                    self.get_emb(node, edge[1], self.graph_data[edge[1]])
-            elif node not in [self.main_node]:
-                print(f'.... > to {node}')
-                self.get_emb(node, self.main_node, main_node_data)
+                  if edge[0] == node['name']:
+                    print(f".... > to {node['name']} via {edge[1]}")
+                    self.get_emb(node['name'], edge[1], self.graph_data[edge[1]])
+            elif node['name'] != self.main_node:
+                print(f".... > to {node['name']}")
+                self.get_emb(node['name'], self.main_node, main_node_data)
 
         # Pass embeddings to nodes that are not directly connected to main node"""
-        for node in self.nodes_not_direct_with_main:
+        for node_name in self.nodes_not_direct_with_main:
             for edge in self.edge_emb:
-                if edge[0] == node:
-                    print(f'.... > to {node} via {edge[1]}')
-                    self.get_emb(node, edge[1], self.graph_data[edge[1]])
+                if edge[0] == node_name:
+                    print(f".... > to {node_name} via {edge[1]}")
+                    self.get_emb(node_name, edge[1], self.graph_data[edge[1]])
 
     def get_emb(self, node, node_with_emb, node_with_emb_data):
         """ Get embeddings 
@@ -379,7 +379,8 @@ class HGTGraph:
          # Node pairs should be the edges between node_with_emb and the node
         node_pairs = [ [node_ids.index(s), node_with_emb_ids.index(t)]
                        for s, t, att in self.G.edges(node_ids, data=True)
-                    if self.G.nodes[t]['type'] == node_with_emb and int(att['weight'] if att['weight'] is not None else 0) <= self.test_bar 
+                    if self.G.nodes[t]['type'] == node_with_emb
+                    #  and int(att['weight'] if att['weight'] is not None else 0) <= self.test_bar 
                     ]
         node_pairs = np.array(node_pairs).T
         edge_count = node_pairs.shape[1]
@@ -462,7 +463,8 @@ def feature_extractor(layer_data, graph, graph_params):
         if 'node_emb' in graph.nodes[idxs[0]]:
             feature[_type] = np.array([graph.nodes[node]['node_emb'] for node in idxs], dtype=np.float)
         else:
-            feature[_type] = np.zeros([len(idxs), 400])
+            # TODO: Change 768 or 400 to node_emb len 
+            feature[_type] = np.zeros([len(idxs), 768])
 
         feature[_type] = np.concatenate((feature[_type], list(graph.nodes[node]['emb'] for node in idxs),\
                                          np.log10(np.array([graph.nodes[node]['repetition'] for node in idxs]).reshape(-1, 1) + 0.01)), axis=1)
@@ -471,7 +473,7 @@ def feature_extractor(layer_data, graph, graph_params):
         indxs[_type] = idxs
 
         if _type == graph_params['main_node']:
-            main_node_feature = graph_params['emb'][graph_params['main_node']]['feature']
+            main_node_feature = find_in_obj(graph_params['emb'], 'node', graph_params['main_node'])['feature']
             texts = np.array([graph.nodes[node][main_node_feature] for node in idxs], dtype=np.str)
 
     return feature, weights, indxs, texts
@@ -636,6 +638,7 @@ def to_torch(feature, weight, edge_list, graph, include_fake_edges=False):
                     """
                         Our weight ranges from 1900 - 2020, largest span is 120.
                     """
+                    # TODO: make it dynamic
                     edge_weight += [int(node_weight[tid]) - int(node_weight[sid]) + 120]
     node_feature = torch.FloatTensor(node_feature)
     node_type = torch.LongTensor(node_type)
