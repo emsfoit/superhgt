@@ -1,237 +1,114 @@
-import datetime
-import os
-import sys
-import time
-import glob
-from collections import defaultdict
 import pandas as pd
-import numpy as np
+import math
+from utils.utils import logger
+from pyHGT.datax import *
+
+def handle_attention(graph, attention, edges_attentions, edge_index, node_type, node_dict, indxs):
+    node_num_name = {val[1]: key for key, val in node_dict.items()}
+    edges_nodes_ids = []
+    for i, target in enumerate(edge_index[0]):
+        source = edge_index[0][i]
+        source_node_num = node_type[source]
+        node_source_name = node_num_name[source_node_num.item()]
+        source_node_id = indxs[node_source_name][source - node_dict[node_source_name][0]]
+
+        target = edge_index[1][i]
+        target_node_num = node_type[target]
+        node_target_name = node_num_name[target_node_num.item()]
+        target_node_id = indxs[node_target_name][target - node_dict[node_target_name][0]]
+        edges_nodes_ids += [[source_node_id, target_node_id]]
+    for target in set(edge_index[1].tolist()):
+        for index in (edge_index[1] == target).nonzero(as_tuple=True)[0]:
+            attention_sum = attention[index].sum().item()
+            target_id = edges_nodes_ids[index][0]
+            source_id = edges_nodes_ids[index][1]
+            target_type = graph.nodes[target_id]['type']
+            source_type = graph.nodes[source_id]['type']
+            edge_type = graph.get_edge_data(target_id, source_id)['edge_type'] if graph.get_edge_data(target_id, source_id) else "self"
+            edges_attentions[target_type][source_type][edge_type][target_id][source_id] = attention_sum
+    return edges_attentions
+
+def remove_edges(graph, edges_attentions):
+    # TODO: Move to config
+    relations = [
+        {
+            'from': {'target': 'paper', 'source': 'field'},
+            'take': 0.2
+        },
+        {
+            'from': {'target': 'paper', 'source': 'author'},
+            'take': 0.2
+        }
+    ]
+    edges_to_be_removed = []
+    for elm in relations:
+        edge = edges_attentions[elm['from']['target']][elm['from']['source']]
+        edges_info = []
+        for rel1 in edge:
+            for target_id in edge[rel1]:
+                for source_id in edge[rel1][target_id]:
+                    # Most of the info here is for debugging purposes only.
+                    edge_info = {
+                        'target': target_id,
+                        'source': source_id,
+                        'rel': rel1,
+                        'attention': edge[rel1][target_id][source_id]
+                    }
+                    edges_info.append(edge_info)
+        df = pd.DataFrame(edges_info)
+        choosen_edges = df.sort_values(by=['attention'])[:math.ceil(len(df)* elm['take'])][['target', 'source']].to_numpy().tolist()
+        logger(f"{len(choosen_edges)}/{len(df)} will be removed")
+        edges_to_be_removed += choosen_edges
+    logger(f"{len(edges_to_be_removed)} total edges will be removed.")
+    remove_edges_hgt(graph, edges_to_be_removed)
 
 
-def extract_attention_list(att, edge_type, edge_index_i, edge_index_j):
-    """returns a 
-    This function to be called in: 
-            torch_geometric.nn.conv.MessagePassing.propagate
-    Parameters
-    ----------
-    att : torch 
-        contains the attention between the nodes
-    edge_type : torch
-        the id of the edge type
-    edge_index_i : torch
-        the id of the source/target node aliened with the att torch
-    edge_index_j : torch
-        the id of the source/target node aliened with the att torch
-    """
-    att_list = defaultdict(lambda: defaultdict())
-    for i, x in enumerate(att):
-        att_list[i]['node1'] = edge_index_j[i].item()
-        att_list[i]['node2'] = edge_index_i[i].item()
-        att_list[i]['edge_type'] = edge_type[i].item()
-        att_list[i]['attention'] = x.cpu().detach().numpy()
-        att_list[i]['attention_mean'] = att[i].mean(dim=0).item()
-    att_list_df = pd.DataFrame.from_dict(att_list, orient='index')
-    curr_time = datetime.datetime.fromtimestamp(
-        time.time()).strftime('%Y%m%d_%H%M%S')
-    output_file_name = f"{os.path.dirname(sys.modules['__main__'].__file__)}/tests/OAG_attention_list_{curr_time}.tsv"
-    print(output_file_name)
-    att_list_df.to_csv(output_file_name, index=False, sep="\t")
-    del att_list_df
+def add_fake_edges(graph, edges_attentions):
+    # TODO: Move to config
+    new_relations = [
+        {
+            'between': ['author', 'field'],
+            'through': [{'target': 'paper', 'source': 'field'}, {'target': 'paper', 'source': 'author'}],
+            'take': 0.2
+        },
+        {
+            'between': ['author', 'field'],
+            'through': [{'target': 'paper', 'source': 'venue'}, {'target': 'paper', 'source': 'author'}],
+            'take': 0.2
+        }
+    ]
+    action_edges = []
+    for elm in new_relations:
+        edges_1 = edges_attentions[elm['through'][0]['target']][elm['through'][0]['source']]
+        edges_2 = edges_attentions[elm['through'][1]['target']][elm['through'][1]['source']]
+        edges_info = []
+        for rel1 in edges_1:
+            for id in edges_1[rel1]:
+                new_targets_ids = edges_1[rel1][id].keys()
+                for rel2 in edges_2:
+                    if id in edges_2[rel2]:
+                        new_sources_ids = edges_2[rel2][id].keys()
+                        for t in new_targets_ids:
+                            for s in new_sources_ids:
+                                # Most of the info here is for debugging purposes only.
+                                id_t = elm['through'][0]['target']+ "-" + elm['through'][0]['source']
+                                id_s = elm['through'][1]['target']+ "-" + elm['through'][1]['source']
+                                att_sum = edges_1[rel1][id][t] + edges_2[rel2][id][s]
+                                new_edge_info = {
+                                    'rel1': id_t,
+                                    'rel2': id_s,
+                                    'left': t,
+                                    'main': id,
+                                    'right': s,
+                                    'main-left-attention': f"{edges_1[rel1][id][t]:.4f}" ,
+                                    'main-right-attention': f"{edges_2[rel2][id][s]:.4f}",
+                                    'sum-all-attention': f"{att_sum:.4f}" 
+                                }
+                                edges_info.append(new_edge_info)
+        df = pd.DataFrame(edges_info)
+        choosen_edges = df.sort_values(by=['sum-all-attention'], ascending=False)[:math.ceil(len(df)* elm['take'])][['left', 'right']].to_numpy().tolist()
+        logger(f"{len(choosen_edges)}/{len(df)} will be added for {'-'.join(elm['between'])}")
+        action_edges += choosen_edges
 
-
-def map_attention_list(epoch, graph, node_dict, edge_dict, indxs):
-    """map the attention score to the original nodes
-    Parameters
-    ----------
-    epoch : int
-    graph : other(dill) 
-    node_dict : dict
-        contains mapping of the node ids to their original types
-    edge_dict : dict
-        contains mapping of the edge ids to their original edges
-    indxs : dict
-        nodes ids mapping
-    """
-    attention_files = glob.glob(
-        f"{os.path.dirname(sys.modules['__main__'].__file__)}/tests/OAG_attention_list_*")
-    for file in attention_files:
-        missing_mapping_counter = defaultdict(lambda: defaultdict())
-        attention_list = pd.read_csv(file, sep='\t').to_dict('index')
-        for key, value in attention_list.items():
-            for node_type, indx_list in node_dict.items():
-                if value['node1'] >= indx_list[0]:
-                    node1_type = node_type
-                    node1_start_indx = indx_list[0]
-                if value['node2'] >= indx_list[0]:
-                    node2_type = node_type
-                    node2_start_indx = indx_list[0]
-            # to check if index is out of bounds
-            test1 = value['node1']-node1_start_indx
-            test2 = value['node2']-node2_start_indx
-            if (test1 >= indxs[node1_type].size) | (test2 >= indxs[node2_type].size):
-                if (test1 >= indxs[node1_type].size):
-                    missing_mapping_counter[node1_type][test1] = True
-                    #print(f'index {test1} is out of bounds for axis 0 with size {indxs[node1_type].size}, type: {node1_type} {node_dict[node1_type]}')
-                if (test2 >= indxs[node2_type].size):
-                    #print(f'index {test2} is out of bounds for axis 0 with size {indxs[node2_type].size}, type: {node2_type} {node_dict[node2_type]}')
-                    missing_mapping_counter[node2_type][test2] = True
-                continue
-            node1_org_id = indxs[node1_type][value['node1']-node1_start_indx]
-            node2_org_id = indxs[node2_type][value['node2']-node2_start_indx]
-            node1_data = graph.node_feature[node1_type].iloc[node1_org_id]
-            node2_data = graph.node_feature[node2_type].iloc[node2_org_id]
-            for column1, data1 in node1_data.items():
-                if 'emb' in column1:
-                    continue
-                attention_list[key][f'node1_{column1}'] = data1
-            for column2, data2 in node2_data.items():
-                if 'emb' in column2:
-                    continue
-                attention_list[key][f'node2_{column2}'] = data2
-            edge = [ekey for ekey, evalue in edge_dict.items() if evalue ==
-                    value['edge_type']][0]
-            attention_list[key]['edge'] = edge
-        attention_list_df = pd.DataFrame.from_dict(
-            attention_list, orient='index')
-        output_file = f"{file.rsplit('/', 1)[0]}/epoch{epoch}_{file.rsplit('/', 1)[1]}.gz"
-        attention_list_df.to_csv(output_file, index=False, compression='gzip', sep="\t")
-        del attention_list_df, attention_list
-        os.remove(file)
-        for x in missing_mapping_counter:
-            print(
-                f'missing mapping {len(missing_mapping_counter[x])} ids in {x}')
-
-
-def map_attention_list2(epoch, node_dict, edge_dict, indxs):
-    """map the attention score to the original nodes
-    Parameters
-    ----------
-    epoch : int
-    node_dict : dict
-        contains mapping of the node ids to their original types
-    edge_dict : dict
-        contains mapping of the edge ids to their original edges
-    indxs : dict
-        nodes ids mapping
-    """
-    attention_files = glob.glob(
-        f"{os.path.dirname(sys.modules['__main__'].__file__)}/tests/OAG_attention_list_*")
-
-    def mapping(node_id1, node_id2, edge_type):
-        for node_type, indx_list in node_dict.items():
-            if node_id1 >= indx_list[0]:
-                node_org_type1 = node_type
-                node_start_indx1 = indx_list[0]
-            if node_id2 >= indx_list[0]:
-                node_org_type2 = node_type
-                node_start_indx2 = indx_list[0]
-        test1 = node_id1-node_start_indx1
-        test2 = node_id2-node_start_indx2
-        if (test1 < indxs[node_org_type1].size) & (test2 < indxs[node_org_type2].size):
-            node_org_id1 = indxs[node_org_type1][node_id1-node_start_indx1]
-            node_org_id2 = indxs[node_org_type2][node_id2-node_start_indx2]
-        elif (test1 >= indxs[node_org_type1].size):
-            missing_mapping_counter[node_org_type1][test1] = True
-            #print(f'index {test1} is out of bounds for axis 0 with size {indxs[node1_type].size}, type: {node1_type} {node_dict[node1_type]}')
-        elif (test2 >= indxs[node_org_type2].size):
-            #print(f'index {test2} is out of bounds for axis 0 with size {indxs[node2_type].size}, type: {node2_type} {node_dict[node2_type]}')
-            missing_mapping_counter[node_org_type2][test2] = True
-
-        """node1_data = graph.node_feature[node1_type].iloc[node1_org_id]
-            node2_data = graph.node_feature[node2_type].iloc[node2_org_id]
-            for column1, data1 in node1_data.items():
-                if 'emb' in column1:
-                    continue
-                attention_list[key][f'node1_{column1}'] = data1
-            for column2, data2 in node2_data.items():
-                if 'emb' in column2:
-                    continue
-                attention_list[key][f'node2_{column2}'] = data2"""
-
-        edge = [ekey for ekey, evalue in edge_dict.items() if evalue ==
-                edge_type][0]
-
-        return node_org_id1, node_org_id2, node_org_type1, node_org_type2, edge
-
-    for file in attention_files:
-        missing_mapping_counter = defaultdict(lambda: defaultdict())
-        attention_list = pd.read_csv(file, sep='\t')
-        attention_list[['node1_org_id','node2_org_id', 'node_org_type1', 'node_org_type2', 'edge']] = attention_list.apply(lambda x: mapping(x['node_id1'], x['node_id2'], x['edge_type']), axis=1, result_type="expand")
-        output_file = f"{file.rsplit('/', 1)[0]}/epoch{epoch}_{file.rsplit('/', 1)[1]}"
-        attention_list.to_csv(output_file, index=False, compression='gzip', sep="\t")
-        del attention_list
-        os.remove(file)
-        for x in missing_mapping_counter:
-            print(
-                f'missing mapping {len(missing_mapping_counter[x])} ids in {x}')
-
-
-def get_weak_strong_attention_lists(attention_files_dir, low_value=0.05, high_value=0.3):
-    """Return strong and weak attention lists from attention list files based on the passed thresholds
-    Parameters
-    ----------
-    attention_files_dir : string
-    low_value : float 
-    high_value : float
-    """
-    attention_files = glob.glob(attention_files_dir)
-    lst = []
-    for file_name in attention_files:
-        df = pd.read_csv(file_name, index_col=None, header=0, compression='gzip', sep="\t")
-        lst.append(df)
-    attention_list = pd.concat(lst, axis=0, ignore_index=True)[
-        ['node1_id', 'node1_type', 'node2_id', 'node2_type', 'edge', 'attention_mean']]
-    agg_attention_list = attention_list.groupby(
-        ['node1_id', 'node1_type', 'node2_id', 'node2_type', 'edge']).mean().reset_index()
-    attention_list_weak = agg_attention_list[agg_attention_list['attention_mean'] <= low_value]
-    attention_list_strong = agg_attention_list[agg_attention_list['attention_mean'] >= high_value]
-    return attention_list_weak, attention_list_strong
-
-
-def update_edge_list(edge_list, node_ids_mapping, updating_edges, remove=True):
-    """Add/remove edges from the graph edge list
-    Parameters
-    ----------
-    edge_list : defaultdict
-        list of the edges between the nodes 
-    node_ids_mapping : dict
-        list of the ids and thier mapping in the graph (node_forward)
-    updating_edges : []
-        list of the edges to remove or add
-    remove : bool (default: True)
-        choose either to add or remove edges
-    """
-    del_counter = 0
-    for type1 in edge_list:
-        for type2 in edge_list[type1]:
-            df = updating_edges[(updating_edges['node1_type'] == type1) & (
-                updating_edges['node2_type'] == type2)]
-            node1_map = pd.DataFrame.from_dict(
-                node_ids_mapping[type1], orient='index')
-            node2_map = pd.DataFrame.from_dict(
-                node_ids_mapping[type2], orient='index')
-            merge1 = df.merge(node1_map, how='left', left_on='node1_id',
-                              right_on=node1_map.index.astype(int))
-            merge2 = merge1.merge(
-                node2_map, how='left', left_on='node2_id', right_on=node2_map.index.astype(int))
-            att_list_cand = merge2.rename(
-                columns={"0_x": "node1_idx", "0_y": "node2_idx"})
-            for index, row in att_list_cand.iterrows():
-                if row['edge'] in edge_list[type1][type2]:
-                    if row['node1_idx'] in edge_list[type1][type2][row['edge']]:
-                        if row['node2_idx'] in edge_list[type1][type2][row['edge']][row['node1_idx']]:
-                            if remove:
-                                del edge_list[type1][type2][row['edge']
-                                                            ][row['node1_idx']][row['node2_idx']]
-                                del_counter += 1
-                            else:
-                                print("ADD HERE WHAT TO DO FOR ADDING EDGES")
-                    if row['node2_idx'] in edge_list[type1][type2][row['edge']]:
-                        if row['node1_idx'] in edge_list[type1][type2][row['edge']][row['node2_idx']]:
-                            if remove:
-                                del edge_list[type1][type2][row['edge']
-                                                            ][row['node2_idx']][row['node1_idx']]
-                                del_counter += 1
-                            else:
-                                print("ADD HERE WHAT TO DO FOR ADDING EDGES")
-    print(f'{del_counter} deleted edges')
+    logger(f"{len(action_edges)} total new edges will be added.")
+    add_fake_edges_hgt(graph, action_edges)

@@ -1,0 +1,81 @@
+
+ Namespace(batch_size=256, clip=0.25, conv_name='hgt', data_percentage=1.0, dropout=0.2, edge_name='paper_field_L2', exract_attention=False, graph_dir='output/graphs/OAG_graph20000.pk', graph_params_dir='config/HGT_graph_params_OAG.json', main_node='paper', model_dir='output', multi_lable_task=True, n_batch=32, n_epoch=30, n_heads=8, n_hid=400, n_layers=4, n_pool=4, optimizer='adamw', predicted_node_name='field', repeat=2, sample_depth=6, sample_width=128, show_tensor_board=False)
+ Data Preparation: 12.5s
+ UPDATE!!!
+ Epoch: 1 (39.3s)  LR: 0.00060 Train Loss: 6.73  Valid Loss: 6.63  Valid NDCG: 0.2014
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 2 (33.6s)  LR: 0.00070 Train Loss: 5.95  Valid Loss: 6.50  Valid NDCG: 0.2305
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 3 (33.9s)  LR: 0.00078 Train Loss: 5.60  Valid Loss: 6.15  Valid NDCG: 0.2763
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 4 (33.8s)  LR: 0.00086 Train Loss: 5.22  Valid Loss: 6.19  Valid NDCG: 0.2842
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 5 (33.7s)  LR: 0.00092 Train Loss: 4.95  Valid Loss: 5.99  Valid NDCG: 0.3160
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 6 (34.4s)  LR: 0.00097 Train Loss: 4.76  Valid Loss: 5.91  Valid NDCG: 0.3321
+ Data Preparation: 0.8s
+ Epoch: 7 (33.9s)  LR: 0.00099 Train Loss: 4.50  Valid Loss: 6.12  Valid NDCG: 0.3193
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 8 (33.8s)  LR: 0.00100 Train Loss: 4.33  Valid Loss: 5.70  Valid NDCG: 0.3579
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 9 (34.5s)  LR: 0.00099 Train Loss: 4.17  Valid Loss: 5.79  Valid NDCG: 0.3671
+ Data Preparation: 0.8s
+ Epoch: 10 (35.2s)  LR: 0.00095 Train Loss: 4.10  Valid Loss: 6.45  Valid NDCG: 0.3052
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 11 (34.7s)  LR: 0.00090 Train Loss: 4.02  Valid Loss: 5.67  Valid NDCG: 0.3854
+ Data Preparation: 0.8s
+ Epoch: 12 (34.0s)  LR: 0.00083 Train Loss: 3.82  Valid Loss: 6.46  Valid NDCG: 0.3428
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 13 (33.7s)  LR: 0.00075 Train Loss: 3.68  Valid Loss: 5.76  Valid NDCG: 0.3978
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 14 (33.9s)  LR: 0.00066 Train Loss: 3.56  Valid Loss: 6.05  Valid NDCG: 0.4077
+ Data Preparation: 0.8s
+ Epoch: 15 (33.4s)  LR: 0.00056 Train Loss: 3.41  Valid Loss: 6.11  Valid NDCG: 0.3749
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 16 (33.6s)  LR: 0.00046 Train Loss: 3.30  Valid Loss: 5.87  Valid NDCG: 0.4241
+ Data Preparation: 0.8s
+ Epoch: 17 (33.7s)  LR: 0.00036 Train Loss: 3.20  Valid Loss: 5.86  Valid NDCG: 0.4237
+ Data Preparation: 0.8s
+ Epoch: 18 (34.6s)  LR: 0.00027 Train Loss: 3.06  Valid Loss: 6.12  Valid NDCG: 0.4173
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 19 (34.5s)  LR: 0.00019 Train Loss: 3.05  Valid Loss: 5.92  Valid NDCG: 0.4376
+ Data Preparation: 0.8s
+ Epoch: 20 (34.0s)  LR: 0.00012 Train Loss: 2.95  Valid Loss: 6.25  Valid NDCG: 0.4004
+ Data Preparation: 0.8s
+ Epoch: 21 (34.0s)  LR: 0.00006 Train Loss: 2.94  Valid Loss: 5.79  Valid NDCG: 0.4298
+ Data Preparation: 0.9s
+ Epoch: 22 (33.9s)  LR: 0.00002 Train Loss: 2.93  Valid Loss: 5.99  Valid NDCG: 0.4354
+ Data Preparation: 0.9s
+ Epoch: 23 (33.2s)  LR: 0.00000 Train Loss: 2.92  Valid Loss: 6.16  Valid NDCG: 0.4312
+ Data Preparation: 0.8s
+ Epoch: 24 (33.7s)  LR: 0.00000 Train Loss: 2.92  Valid Loss: 5.83  Valid NDCG: 0.4288
+ Data Preparation: 0.8s
+ Epoch: 25 (34.3s)  LR: 0.00003 Train Loss: 2.92  Valid Loss: 6.10  Valid NDCG: 0.4250
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 26 (34.0s)  LR: 0.00007 Train Loss: 2.89  Valid Loss: 5.85  Valid NDCG: 0.4385
+ Data Preparation: 0.9s
+ Epoch: 27 (34.7s)  LR: 0.00012 Train Loss: 2.84  Valid Loss: 5.83  Valid NDCG: 0.4312
+ Data Preparation: 0.8s
+ Epoch: 28 (34.4s)  LR: 0.00020 Train Loss: 2.82  Valid Loss: 6.08  Valid NDCG: 0.4221
+ Data Preparation: 0.8s
+ Epoch: 29 (34.2s)  LR: 0.00028 Train Loss: 2.79  Valid Loss: 6.01  Valid NDCG: 0.4207
+ Data Preparation: 0.9s
+ Epoch: 30 (34.2s)  LR: 0.00038 Train Loss: 2.78  Valid Loss: 6.38  Valid NDCG: 0.4113
+ Last Test NDCG: 0.4060
+ Last Test MRR:  0.5467
+ Best Test NDCG: 0.4110
+ Best Test MRR:  0.5586
+ 1275.0s

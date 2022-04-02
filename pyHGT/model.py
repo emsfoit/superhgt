@@ -90,8 +90,8 @@ class GNN(nn.Module):
         meta_xs = self.drop(res)
         del res
         for gc in self.gcs:
-            meta_xs = gc(meta_xs, node_type, edge_index, edge_type, edge_time)
-        return meta_xs
+            attention, meta_xs = gc(meta_xs, node_type, edge_index, edge_type, edge_time)
+        return attention, meta_xs
 
 class HGTConv(MessagePassing):
     def __init__(self, in_dim, out_dim, num_types, num_relations, n_heads, dropout=0.2, use_norm=True, use_RTE=True, **kwargs):
@@ -140,8 +140,9 @@ class HGTConv(MessagePassing):
         glorot(self.relation_msg)
 
     def forward(self, node_inp, node_type, edge_index, edge_type, edge_time):
-        return self.propagate(edge_index, node_inp=node_inp, node_type=node_type,
+        f =  self.propagate(edge_index, node_inp=node_inp, node_type=node_type,
                               edge_type=edge_type, edge_time=edge_time)
+        return self.att, f
 
     def message(self, edge_index_i, edge_index_j, node_inp_i, node_inp_j, node_type_i, node_type_j, edge_type, edge_time):
         """j: source, i: target; <j, i>"""

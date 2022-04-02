@@ -1,0 +1,114 @@
+
+ Namespace(batch_size=256, clip=0.25, conv_name='hgt', data_percentage=1.0, dropout=0.2, edge_name='paper_field_L2', exract_attention=False, graph_dir='output/graphs/OAG_graph20000.pk', graph_params_dir='config/HGT_graph_params_OAG.json', main_node='paper', model_dir='output', multi_lable_task=True, n_batch=32, n_epoch=30, n_heads=8, n_hid=400, n_layers=4, n_pool=4, optimizer='adamw', predicted_node_name='field', repeat=2, sample_depth=6, sample_width=128, show_tensor_board=False)
+ Counter({'field_field': 88057, 'rev_field_field': 88057, 'paper_field_L2': 77166, 'rev_paper_field_L2': 77166, 'paper_field_L1': 39345, 'rev_paper_field_L1': 39345, 'author_affiliation': 38299, 'rev_author_affiliation': 38299, 'paper_field_L3': 27948, 'rev_paper_field_L3': 27948, 'paper_author_write_other': 20542, 'rev_paper_author_write_other': 20542, 'paper_field_L0': 20017, 'rev_paper_field_L0': 20017, 'paper_author_write_first': 14243, 'rev_paper_author_write_first': 14243, 'paper_author_write_last': 12248, 'rev_paper_author_write_last': 12248, 'paper_venue_Conference': 10308, 'rev_paper_venue_Conference': 10308, 'paper_field_L4': 9800, 'rev_paper_field_L4': 9800, 'paper_venue_Journal': 8558, 'rev_paper_venue_Journal': 8558, 'paper_field_L5': 5882, 'rev_paper_field_L5': 5882, 'rev_paper_paper': 5118, 'paper_paper': 5064, 'paper_venue_Repository': 1132, 'rev_paper_venue_Repository': 1132, 'paper_venue_Patent': 2, 'rev_paper_venue_Patent': 2})
+ Data Preparation: 12.8s
+ UPDATE!!!
+ Epoch: 1 (36.2s)  LR: 0.00060 Train Loss: 6.56  Valid Loss: 6.63  Valid NDCG: 0.2065
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 2 (31.3s)  LR: 0.00070 Train Loss: 5.94  Valid Loss: 6.48  Valid NDCG: 0.2200
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 3 (31.4s)  LR: 0.00078 Train Loss: 5.61  Valid Loss: 6.19  Valid NDCG: 0.2509
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 4 (32.0s)  LR: 0.00086 Train Loss: 5.23  Valid Loss: 6.34  Valid NDCG: 0.2672
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 5 (31.5s)  LR: 0.00092 Train Loss: 4.97  Valid Loss: 5.95  Valid NDCG: 0.2889
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 6 (31.3s)  LR: 0.00097 Train Loss: 4.74  Valid Loss: 6.01  Valid NDCG: 0.3210
+ Data Preparation: 0.9s
+ Epoch: 7 (31.2s)  LR: 0.00099 Train Loss: 4.53  Valid Loss: 6.06  Valid NDCG: 0.3111
+ Data Preparation: 0.9s
+ Epoch: 8 (31.0s)  LR: 0.00100 Train Loss: 4.32  Valid Loss: 6.01  Valid NDCG: 0.3168
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 9 (32.4s)  LR: 0.00099 Train Loss: 4.14  Valid Loss: 5.99  Valid NDCG: 0.3281
+ Data Preparation: 0.8s
+ Take 0.2 * Edges with high attentions
+ 1125 new edges will be added between Fields and author
+ 966 new edges will be added between Fields and author
+ 1035 new edges will be added between Fields and author
+ 1052 new edges will be added between Fields and author
+ 1062 new edges will be added between Fields and author
+ 1101 new edges will be added between Fields and author
+ 1145 new edges will be added between Fields and author
+ 1121 new edges will be added between Fields and author
+ 1041 new edges will be added between Fields and author
+ 1000 new edges will be added between Fields and author
+ 1103 new edges will be added between Fields and author
+ 1156 new edges will be added between Fields and author
+ 1037 new edges will be added between Fields and author
+ 1033 new edges will be added between Fields and author
+ 1076 new edges will be added between Fields and author
+ 1111 new edges will be added between Fields and author
+ 924 new edges will be added between Fields and author
+ 1062 new edges will be added between Fields and author
+ 1064 new edges will be added between Fields and author
+ 1005 new edges will be added between Fields and author
+ 1082 new edges will be added between Fields and author
+ 1021 new edges will be added between Fields and author
+ 1024 new edges will be added between Fields and author
+ 1014 new edges will be added between Fields and author
+ 1180 new edges will be added between Fields and author
+ 1033 new edges will be added between Fields and author
+ 1125 new edges will be added between Fields and author
+ 1007 new edges will be added between Fields and author
+ 1088 new edges will be added between Fields and author
+ 1077 new edges will be added between Fields and author
+ 1077 new edges will be added between Fields and author
+ 1045 new edges will be added between Fields and author
+ UPDATE!!!
+ Epoch: 10 (1602.6s)  LR: 0.00095 Train Loss: 3.99  Valid Loss: 6.19  Valid NDCG: 0.3337
+ Data Preparation: 1.0s
+ UPDATE!!!
+ Epoch: 11 (31.4s)  LR: 0.00090 Train Loss: 3.78  Valid Loss: 5.77  Valid NDCG: 0.3779
+ Data Preparation: 0.9s
+ Epoch: 12 (32.6s)  LR: 0.00083 Train Loss: 3.73  Valid Loss: 6.31  Valid NDCG: 0.3550
+ Data Preparation: 0.9s
+ Epoch: 13 (32.5s)  LR: 0.00075 Train Loss: 3.59  Valid Loss: 5.90  Valid NDCG: 0.3754
+ Data Preparation: 0.9s
+ Epoch: 14 (32.5s)  LR: 0.00066 Train Loss: 3.50  Valid Loss: 6.34  Valid NDCG: 0.3700
+ Data Preparation: 0.8s
+ Epoch: 15 (32.2s)  LR: 0.00056 Train Loss: 3.30  Valid Loss: 6.24  Valid NDCG: 0.3687
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 16 (32.6s)  LR: 0.00046 Train Loss: 3.23  Valid Loss: 6.21  Valid NDCG: 0.3996
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 17 (32.3s)  LR: 0.00036 Train Loss: 3.13  Valid Loss: 6.12  Valid NDCG: 0.4030
+ Data Preparation: 0.9s
+ Epoch: 18 (32.8s)  LR: 0.00027 Train Loss: 3.06  Valid Loss: 6.36  Valid NDCG: 0.3899
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 19 (32.4s)  LR: 0.00019 Train Loss: 2.99  Valid Loss: 6.18  Valid NDCG: 0.4281
+ Data Preparation: 0.9s
+ Epoch: 20 (32.1s)  LR: 0.00012 Train Loss: 2.93  Valid Loss: 6.34  Valid NDCG: 0.3923
+ Data Preparation: 0.9s
+ Epoch: 21 (32.0s)  LR: 0.00006 Train Loss: 2.90  Valid Loss: 6.08  Valid NDCG: 0.4036
+ Data Preparation: 1.0s
+ Epoch: 22 (31.9s)  LR: 0.00002 Train Loss: 2.88  Valid Loss: 6.27  Valid NDCG: 0.3997
+ Data Preparation: 0.9s
+ Epoch: 23 (32.1s)  LR: 0.00000 Train Loss: 2.90  Valid Loss: 6.34  Valid NDCG: 0.4269
+ Data Preparation: 0.9s
+ Epoch: 24 (32.0s)  LR: 0.00000 Train Loss: 2.91  Valid Loss: 6.20  Valid NDCG: 0.4107
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 25 (32.1s)  LR: 0.00003 Train Loss: 2.91  Valid Loss: 6.16  Valid NDCG: 0.4342
+ Data Preparation: 0.9s
+ Epoch: 26 (32.7s)  LR: 0.00007 Train Loss: 2.86  Valid Loss: 5.98  Valid NDCG: 0.4170
+ Data Preparation: 0.9s
+ Epoch: 27 (32.1s)  LR: 0.00012 Train Loss: 2.83  Valid Loss: 6.03  Valid NDCG: 0.4210
+ Data Preparation: 0.9s
+ Epoch: 28 (32.1s)  LR: 0.00020 Train Loss: 2.78  Valid Loss: 6.39  Valid NDCG: 0.4035
+ Data Preparation: 0.9s
+ Epoch: 29 (32.2s)  LR: 0.00028 Train Loss: 2.75  Valid Loss: 6.06  Valid NDCG: 0.4338
+ Data Preparation: 0.9s
+ Epoch: 30 (32.2s)  LR: 0.00038 Train Loss: 2.73  Valid Loss: 6.58  Valid NDCG: 0.4004
+ Last Test NDCG: 0.3908
+ Last Test MRR:  0.5338
+ Best Test NDCG: 0.3952
+ Best Test MRR:  0.5298
+ Done after 2622.0s

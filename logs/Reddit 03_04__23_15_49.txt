@@ -1,0 +1,87 @@
+
+ Namespace(batch_size=256, clip=0.25, conv_name='hgt', data_percentage=1.0, dropout=0.2, edge_name='post_subreddit', exract_attention=False, graph_dir='output/graphs/OAG_grap_reddit_10000.pk', graph_params_dir='config/HGT_graph_params_Reddit.json', include_fake_edges=False, main_node='post', model_dir='output', multi_lable_task=True, n_batch=32, n_epoch=30, n_heads=8, n_hid=400, n_layers=4, n_pool=4, optimizer='adamw', predicted_node_name='field', remove_edges=False, repeat=2, restructure_at_epoch=10, sample_depth=6, sample_width=128, show_tensor_board=False)
+ Counter({'author_comment': 33896, 'rev_author_comment': 33896, 'post_comment': 25843, 'rev_post_comment': 25843, 'post_author': 9988, 'post_subreddit': 9988, 'rev_post_author': 9988, 'rev_post_subreddit': 9988, 'rev_comment_comment': 4310, 'comment_comment': 4310})
+ GNN configuration: 
+ in_dim = 1537, n_hid = 400,              num_types = 4, num_relations = 11,             n_heads = 8, n_layers = 4, dropout = 0.2
+ Data Preparation: 36.1s
+ UPDATE!!!
+ Epoch: 1 (70.1s)  LR: 0.00060 Train Loss: 4.29  Valid Loss: 3.65  Valid NDCG: 0.5123
+ Data Preparation: 0.7s
+ UPDATE!!!
+ Epoch: 2 (75.9s)  LR: 0.00070 Train Loss: 3.41  Valid Loss: 4.15  Valid NDCG: 0.5158
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 3 (66.7s)  LR: 0.00078 Train Loss: 3.17  Valid Loss: 3.51  Valid NDCG: 0.5741
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 4 (68.2s)  LR: 0.00086 Train Loss: 2.68  Valid Loss: 3.35  Valid NDCG: 0.5755
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 5 (70.3s)  LR: 0.00092 Train Loss: 2.28  Valid Loss: 3.05  Valid NDCG: 0.6685
+ Data Preparation: 0.8s
+ Epoch: 6 (72.6s)  LR: 0.00097 Train Loss: 2.06  Valid Loss: 3.21  Valid NDCG: 0.6524
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 7 (79.9s)  LR: 0.00099 Train Loss: 1.82  Valid Loss: 2.90  Valid NDCG: 0.6751
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 8 (89.3s)  LR: 0.00100 Train Loss: 1.77  Valid Loss: 3.09  Valid NDCG: 0.6818
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 9 (88.6s)  LR: 0.00099 Train Loss: 1.47  Valid Loss: 2.74  Valid NDCG: 0.7010
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 10 (84.4s)  LR: 0.00095 Train Loss: 1.38  Valid Loss: 2.78  Valid NDCG: 0.7128
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 11 (1925.3s)  LR: 0.00090 Train Loss: 1.26  Valid Loss: 2.62  Valid NDCG: 0.7273
+ Data Preparation: 0.8s
+ Epoch: 12 (85.8s)  LR: 0.00083 Train Loss: 1.17  Valid Loss: 2.79  Valid NDCG: 0.7270
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 13 (214.1s)  LR: 0.00075 Train Loss: 1.02  Valid Loss: 2.74  Valid NDCG: 0.7450
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 14 (80.6s)  LR: 0.00066 Train Loss: 0.96  Valid Loss: 2.81  Valid NDCG: 0.7759
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 15 (80.0s)  LR: 0.00056 Train Loss: 0.78  Valid Loss: 2.80  Valid NDCG: 0.7821
+ Data Preparation: 0.9s
+ Epoch: 16 (78.4s)  LR: 0.00046 Train Loss: 0.70  Valid Loss: 2.95  Valid NDCG: 0.7632
+ Data Preparation: 0.9s
+ Epoch: 17 (79.4s)  LR: 0.00036 Train Loss: 0.61  Valid Loss: 3.23  Valid NDCG: 0.7718
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 18 (79.1s)  LR: 0.00027 Train Loss: 0.53  Valid Loss: 2.47  Valid NDCG: 0.8179
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 19 (79.2s)  LR: 0.00019 Train Loss: 0.47  Valid Loss: 2.46  Valid NDCG: 0.8438
+ Data Preparation: 0.8s
+ Epoch: 20 (80.7s)  LR: 0.00012 Train Loss: 0.39  Valid Loss: 3.09  Valid NDCG: 0.8061
+ Data Preparation: 0.8s
+ Epoch: 21 (80.5s)  LR: 0.00006 Train Loss: 0.37  Valid Loss: 2.68  Valid NDCG: 0.8349
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 22 (80.1s)  LR: 0.00002 Train Loss: 0.32  Valid Loss: 2.38  Valid NDCG: 0.8532
+ Data Preparation: 0.8s
+ Epoch: 23 (81.5s)  LR: 0.00000 Train Loss: 0.32  Valid Loss: 2.87  Valid NDCG: 0.8301
+ Data Preparation: 0.9s
+ Epoch: 24 (80.7s)  LR: 0.00000 Train Loss: 0.33  Valid Loss: 2.78  Valid NDCG: 0.8326
+ Data Preparation: 0.9s
+ Epoch: 25 (81.0s)  LR: 0.00003 Train Loss: 0.30  Valid Loss: 2.61  Valid NDCG: 0.8439
+ Data Preparation: 0.9s
+ Epoch: 26 (80.5s)  LR: 0.00007 Train Loss: 0.30  Valid Loss: 2.67  Valid NDCG: 0.8361
+ Data Preparation: 0.8s
+ Epoch: 27 (81.6s)  LR: 0.00012 Train Loss: 0.31  Valid Loss: 3.23  Valid NDCG: 0.8270
+ Data Preparation: 0.8s
+ Epoch: 28 (81.7s)  LR: 0.00020 Train Loss: 0.29  Valid Loss: 3.64  Valid NDCG: 0.8064
+ Data Preparation: 0.8s
+ Epoch: 29 (80.7s)  LR: 0.00028 Train Loss: 0.31  Valid Loss: 3.11  Valid NDCG: 0.8415
+ Data Preparation: 0.8s
+ Epoch: 30 (82.0s)  LR: 0.00038 Train Loss: 0.35  Valid Loss: 3.06  Valid NDCG: 0.8216
+ {'post_author': 9988, 'post_subreddit': 9988, 'post_comment': 25843, 'rev_post_author': 9988, 'author_comment': 33896, 'rev_post_comment': 25843, 'rev_author_comment': 33896, 'rev_comment_comment': 4310, 'comment_comment': 4310, 'rev_post_subreddit': 9988}
+ Last Test NDCG: 0.8117
+ Last Test MRR:  0.7500
+ Best Test NDCG: 0.8060
+ Best Test MRR:  0.7378
+ Done after 4447.1s
