@@ -17,7 +17,7 @@ from collections import defaultdict, Counter
 from scipy.sparse import coo_matrix
 from utils.utils import convert_series_to_array, normalize
 import time
-
+from tqdm import tqdm
 def find_in_obj(obj, att, value):
     return next((elm for elm in obj if elm[att] == value), None)
 
@@ -197,8 +197,14 @@ class HGTGraph:
                                                   output_hidden_states=True,
                                                   output_attentions=True).to(self.device)
             print(f'.... Adding embeddings for {node_type}:{feature}')
-            for key, value in node_data.items():
+
+            # !used for testing(skip downloading the embedings) to run the process fast
+            use_random_embeding = False
+            for key, value in tqdm(node_data.items()):
                 try:
+                    if use_random_embeding:
+                        value[emb_name] = list(np.random.rand(768))
+                        continue
                     input_ids = torch.tensor(
                         [tokenizer.encode(value[feature])]).to(self.device)[:, :64]
                     if len(input_ids[0]) < min_number_of_words:
@@ -219,12 +225,12 @@ class HGTGraph:
 
     def add_nodes(self):
         """ Add nodes to graph """
-        self.G.add_nodes_from([(f'{features["type"]}_{key}', features) for node in self.graph_data  for key, features in self.graph_data[node].items()])
+        self.G.add_nodes_from([(f'{features["type"]}_{key}', features) for node in self.graph_data  for key, features in tqdm(self.graph_data[node].items())])
 
     def add_edges(self):
         """ Connect nodes """
         print('.. Connecting nodes:')
-        for edge in self.edges:
+        for edge in tqdm(self.edges):
             source = edge['source']
             target = edge['target']
             source_node = find_in_obj(self.nodes, 'name', source)
@@ -274,14 +280,14 @@ class HGTGraph:
         
         main_node_ids = self.get_data(self.main_node).index.to_list()
         node_repetition_ids = self.get_data(self.node_to_calculate_repitition).index.to_list() if self.main_node != self.node_to_calculate_repitition else main_node_ids
-        
-        for id in main_node_ids: self.get_node_repetition(id, node_repetition_ids, is_main_node=True)
+        print("get_node_repetition of main node")
+        for id in tqdm(main_node_ids): self.get_node_repetition(id, node_repetition_ids, is_main_node=True)
 
-        for node_type in self.nodes:
+        for node_type in tqdm(self.nodes):
             if node_type != self.main_node:
                 print(f'.... > Passing info from {self.main_node} to {node_type}')
                 node_ids = self.get_data(node_type).index.to_list()
-                for id in node_ids: self.get_node_repetition(id, main_node_ids)
+                for id in tqdm(node_ids): self.get_node_repetition(id, main_node_ids)
 
     def get_node_repetition(self, node_id, node_repetition_ids, is_main_node=False):
         """ Get node repetition from another node 
@@ -344,8 +350,8 @@ class HGTGraph:
                 lambda x: convert_series_to_array(x['emb'], sep=',', dtype=float), axis=1)
         else:
             main_node_data['emb'] = main_node_data['emb']
-
-        for node in self.nodes:
+        print("passing node info to nodes connected directly with the main node")
+        for node in tqdm(self.nodes):
             if node['name'] in list(self.nodes_not_direct_with_main):
                 for edge in self.edge_emb:
                   if edge[0] == node['name']:
@@ -354,10 +360,10 @@ class HGTGraph:
             elif node['name'] != self.main_node:
                 print(f".... > to {node['name']}")
                 self.get_emb(node['name'], self.main_node, main_node_data)
-
+        print("passing node info to nodes not connected directly with the main node")
         # Pass embeddings to nodes that are not directly connected to main node"""
-        for node_name in self.nodes_not_direct_with_main:
-            for edge in self.edge_emb:
+        for node_name in tqdm(self.nodes_not_direct_with_main):
+            for edge in tqdm(self.edge_emb):
                 if edge[0] == node_name:
                     print(f".... > to {node_name} via {edge[1]}")
                     self.get_emb(node_name, edge[1], self.graph_data[edge[1]])
@@ -378,7 +384,7 @@ class HGTGraph:
         node_ids = node_data.index.to_list()
          # Node pairs should be the edges between node_with_emb and the node
         node_pairs = [ [node_ids.index(s), node_with_emb_ids.index(t)]
-                       for s, t, att in self.G.edges(node_ids, data=True)
+                       for s, t, att in tqdm(self.G.edges(node_ids, data=True))
                     if self.G.nodes[t]['type'] == node_with_emb
                     #  and int(att['weight'] if att['weight'] is not None else 0) <= self.test_bar 
                     ]
