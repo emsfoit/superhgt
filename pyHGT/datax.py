@@ -126,7 +126,6 @@ class HGTGraph:
         self.G.graph['weights'] = get_weights(self.G)
         self.G.graph['node_types'] = get_types(self.G)
         self.G.graph['meta'] = get_meta_graph(self.G)
-        self.G.graph['main_node_embedding_length'] = 7016
         # edge_list = get_edge_list(self.G)
         # self.G.graph['edge_list'] = edge_list
    
@@ -150,6 +149,8 @@ class HGTGraph:
                 node_data['node_emb'] = node_data['node_emb'].astype(str)
                 node_data['node_emb'] = node_data.apply(
                     lambda x: convert_series_to_array(x['node_emb'], sep=' ',dtype=float), axis=1)
+                # ! not sure if that's the best place for it (In OAG the node_emb size is 400 and for the reddit 768)
+                self.G.graph['node_emb_size'] = len(node_data['node_emb'][0])
 
             node_data = node_data.to_dict('index')
 
@@ -189,6 +190,8 @@ class HGTGraph:
             emb_name = 'emb'
         else:
             emb_name = 'node_emb'
+            # ! not sure if that's the right place for it (In OAG the node_emb is 400 and in the reddit 768) if we will calculate the node_emb then the size is 768
+            self.G.graph['node_emb_size'] = 768
 
         if model == 'XLNetTokenizer':
             tokenizer = tr.XLNetTokenizer.from_pretrained(
@@ -198,8 +201,8 @@ class HGTGraph:
                                                   output_attentions=True).to(self.device)
             print(f'.... Adding embeddings for {node_type}:{feature}')
 
-            # !used for testing(skip downloading the embedings) to run the process fast
-            use_random_embeding = False
+            # !use only for testing(skip downloading the embedings)
+            use_random_embeding = True
             for key, value in tqdm(node_data.items()):
                 try:
                     if use_random_embeding:
@@ -247,7 +250,7 @@ class HGTGraph:
                 edge_type_feature = edge['edge_type_feature']
 
             weight = None
-            if edge['df'] == self.weight['df']:
+            if self.weight['feature'] in input_df.columns.to_list():
                 weight = self.weight['feature']
 
             fields = [source_id, target_id]
@@ -469,8 +472,8 @@ def feature_extractor(layer_data, graph, graph_params):
         if 'node_emb' in graph.nodes[idxs[0]]:
             feature[_type] = np.array([graph.nodes[node]['node_emb'] for node in idxs], dtype=np.float)
         else:
-            # TODO: Change 768 or 400 to node_emb len 
-            feature[_type] = np.zeros([len(idxs), 768])
+            node_emb_size = graph.graph['node_emb_size']
+            feature[_type] = np.zeros([len(idxs), node_emb_size])
 
         feature[_type] = np.concatenate((feature[_type], list(graph.nodes[node]['emb'] for node in idxs),\
                                          np.log10(np.array([graph.nodes[node]['repetition'] for node in idxs]).reshape(-1, 1) + 0.01)), axis=1)
