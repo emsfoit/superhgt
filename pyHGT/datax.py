@@ -202,7 +202,7 @@ class HGTGraph:
             print(f'.... Adding embeddings for {node_type}:{feature}')
 
             # !use only for testing(skip downloading the embedings)
-            use_random_embeding = True
+            use_random_embeding = False
             for key, value in tqdm(node_data.items()):
                 try:
                     if use_random_embeding:
@@ -286,7 +286,8 @@ class HGTGraph:
         print("get_node_repetition of main node")
         for id in tqdm(main_node_ids): self.get_node_repetition(id, node_repetition_ids, is_main_node=True)
 
-        for node_type in tqdm(self.nodes):
+        for node in tqdm(self.nodes):
+            node_type = node['name']
             if node_type != self.main_node:
                 print(f'.... > Passing info from {self.main_node} to {node_type}')
                 node_ids = self.get_data(node_type).index.to_list()
