@@ -5,10 +5,10 @@
 # For single-classification task (i.e. main-node is associated with one sub-node) keep the defualt of multi_lable_task: "False".
 # For mult-classification task (i.e. main-node is associated with multiple sub-nodes) set the value of multi_lable_task to "True".
 
-# TODO 1: to be replaced by HGT_train_modelx.py that uses Networkx
 
 import argparse
 import os
+import sys
 import json
 import time
 import multiprocessing as mp
@@ -31,17 +31,17 @@ parser = argparse.ArgumentParser(
     description='Training GNN on main_node - sub_node classification task')
 
 """Dataset arguments"""
-parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_grap_reddit_10000.pk',
+parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph20000.pk',
                     help='The address of preprocessed graph.')
 parser.add_argument('--model_dir', type=str, default='output',
                     help='The address for storing the models and optimization results.')
-parser.add_argument('--graph_params_dir', type=str, default='config/HGT_graph_params_Reddit.json',
+parser.add_argument('--graph_params_dir', type=str, default='config/HGT_graph_params_OAG.json',
                     help='The address of the graph params file')
-parser.add_argument('--main_node', type=str, default='post',
+parser.add_argument('--main_node', type=str, default='paper',
                     help='The name of the main node in the graph')
-parser.add_argument('--predicted_node_name', type=str, default='subreddit',
+parser.add_argument('--predicted_node_name', type=str, default='field',
                     help='The name of the node that its values to be predicted')
-parser.add_argument('--edge_name', type=str, default='post_subreddit',
+parser.add_argument('--edge_name', type=str, default='paper_field_L2',
                     help='The name of edge')
 parser.add_argument('--exract_attention', type=bool, default=False,
                     help='extract the attention lists')
@@ -51,6 +51,8 @@ parser.add_argument('--show_tensor_board', type=bool, default=False,
 """Model arguments """
 parser.add_argument('--multi_lable_task', type=bool, default=True,
                     help='Multi label classification task')
+parser.add_argument('--use_RTE', type=bool, default=True,
+                    help='use RTE')
 parser.add_argument('--conv_name', type=str, default='hgt',
                     choices=['hgt', 'gcn', 'gat', 'rgcn', 'han', 'hetgnn'],
                     help='The name of GNN filter. By default is Heterogeneous Graph Transformer (hgt)')
@@ -73,7 +75,7 @@ parser.add_argument('--optimizer', type=str, default='adamw',
                     help='optimizer to use.')
 parser.add_argument('--data_percentage', type=float, default=1.0,
                     help='Percentage of training and validation data to use')
-parser.add_argument('--n_epoch', type=int, default=30,
+parser.add_argument('--n_epoch', type=int, default=5,
                     help='Number of epoch to run')
 parser.add_argument('--n_pool', type=int, default=4,
                     help='Number of process to sample subgraph')
@@ -243,6 +245,10 @@ else:
                 test_pairs[target_id] = [[], _weight]
             test_pairs[target_id][0] += [source_id]
 
+if len(test_pairs) == 0 or len(valid_pairs) == 0 or len(train_pairs) == 0:
+    print("pairs are not set correctly!!")
+    sys.exit()
+
 np.random.seed(43)
 """Only train and valid with a certain percentage of data, if necessary."""
 sel_train_pairs = {p: train_pairs[p] for p in np.random.choice(list(
@@ -252,10 +258,12 @@ sel_valid_pairs = {p: valid_pairs[p] for p in np.random.choice(list(
 # there is no sel_test_paris here as it is not costy whatever size it has
 
 """Initialize GNN (model is specified by conv_name) and Classifier"""
-# TODO: make in_dim dynamic
-# in_dim = graph.graph['main_node_embedding_length'] + 401
-in_dim = 768 + 768 +  1
-# TODO: make use_RTE dynamic
+in_dim = 768 # EMB
+in_dim += graph.graph['node_emb_size'] # Node emb
+if args.use_RTE:
+    in_dim += 1   # log of publish data (year) OAG / for reddit change use_RTE to FALSE
+
+# 1: is for self relation 3: self, fake, rev_fake
 num_relations = len(graph.graph['meta']) + 3 if args.include_fake_edges else len(graph.graph['meta']) + 1
 gnn = GNN(in_dim=in_dim,
           n_hid=args.n_hid,
@@ -265,7 +273,7 @@ gnn = GNN(in_dim=in_dim,
           n_layers=args.n_layers,
           dropout=args.dropout,
           conv_name=args.conv_name,
-          use_RTE=False).to(device)
+          use_RTE=args.use_RTE).to(device)
 logger(f"GNN configuration: \n in_dim = {in_dim}, n_hid = {args.n_hid}, \
              num_types = {len(graph.graph['node_types'])}, num_relations = {num_relations}, \
             n_heads = {args.n_heads}, n_layers = {args.n_layers}, dropout = {args.dropout}")
