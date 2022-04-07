@@ -1,0 +1,124 @@
+
+ Namespace(batch_size=256, clip=0.25, conv_name='hgt', data_percentage=1.0, dropout=0.2, edge_name='paper_field_L2', exract_attention=False, graph_dir='output/graphs/OAG_graph20000.pk', graph_params_dir='config/HGT_graph_params_OAG.json', include_fake_edges=False, main_node='paper', model_dir='output', multi_lable_task=True, n_batch=32, n_epoch=50, n_heads=8, n_hid=400, n_layers=4, n_pool=4, optimizer='adamw', predicted_node_name='field', remove_edges=False, repeat=2, restructure_at_epoch=10, sample_depth=6, sample_width=128, show_tensor_board=False, use_RTE=True)
+ Counter({'field_field': 88057, 'rev_field_field': 88057, 'paper_field_L2': 77166, 'rev_paper_field_L2': 77166, 'paper_field_L1': 39345, 'rev_paper_field_L1': 39345, 'author_affiliation': 38299, 'rev_author_affiliation': 38299, 'paper_field_L3': 27948, 'rev_paper_field_L3': 27948, 'paper_author_write_other': 20542, 'rev_paper_author_write_other': 20542, 'paper_field_L0': 20017, 'rev_paper_field_L0': 20017, 'paper_author_write_first': 14243, 'rev_paper_author_write_first': 14243, 'paper_author_write_last': 12248, 'rev_paper_author_write_last': 12248, 'paper_venue_Conference': 10308, 'rev_paper_venue_Conference': 10308, 'paper_field_L4': 9800, 'rev_paper_field_L4': 9800, 'paper_venue_Journal': 8558, 'rev_paper_venue_Journal': 8558, 'paper_field_L5': 5882, 'rev_paper_field_L5': 5882, 'rev_paper_paper': 5118, 'paper_paper': 5064, 'paper_venue_Repository': 1132, 'rev_paper_venue_Repository': 1132, 'paper_venue_Patent': 2, 'rev_paper_venue_Patent': 2})
+ GNN configuration: 
+ in_dim = 1169, n_hid = 400,              num_types = 5, num_relations = 33,             n_heads = 8, n_layers = 4, dropout = 0.2
+ Data Preparation: 12.7s
+ UPDATE!!!
+ Epoch: 1 (39.1s)  LR: 0.00060 Train Loss: 6.57  Valid Loss: 6.67  Valid NDCG: 0.1976
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 2 (33.4s)  LR: 0.00070 Train Loss: 5.97  Valid Loss: 6.58  Valid NDCG: 0.2115
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 3 (33.4s)  LR: 0.00078 Train Loss: 5.67  Valid Loss: 6.20  Valid NDCG: 0.2578
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 4 (33.7s)  LR: 0.00086 Train Loss: 5.31  Valid Loss: 6.23  Valid NDCG: 0.2848
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 5 (33.6s)  LR: 0.00092 Train Loss: 4.96  Valid Loss: 6.02  Valid NDCG: 0.3253
+ Data Preparation: 0.8s
+ UPDATE!!!
+ Epoch: 6 (33.4s)  LR: 0.00097 Train Loss: 4.69  Valid Loss: 5.91  Valid NDCG: 0.3485
+ Data Preparation: 0.8s
+ Epoch: 7 (33.6s)  LR: 0.00099 Train Loss: 4.43  Valid Loss: 6.26  Valid NDCG: 0.3249
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 8 (33.5s)  LR: 0.00100 Train Loss: 4.18  Valid Loss: 5.77  Valid NDCG: 0.3486
+ Data Preparation: 0.8s
+ Epoch: 9 (33.3s)  LR: 0.00099 Train Loss: 3.97  Valid Loss: 6.17  Valid NDCG: 0.3391
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 10 (33.7s)  LR: 0.00095 Train Loss: 3.82  Valid Loss: 6.05  Valid NDCG: 0.3795
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 11 (33.8s)  LR: 0.00090 Train Loss: 3.61  Valid Loss: 5.73  Valid NDCG: 0.3893
+ Data Preparation: 0.9s
+ Epoch: 12 (33.5s)  LR: 0.00083 Train Loss: 3.43  Valid Loss: 6.13  Valid NDCG: 0.3745
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 13 (33.3s)  LR: 0.00075 Train Loss: 3.25  Valid Loss: 5.65  Valid NDCG: 0.4273
+ Data Preparation: 0.9s
+ Epoch: 14 (33.8s)  LR: 0.00066 Train Loss: 3.17  Valid Loss: 6.12  Valid NDCG: 0.4247
+ Data Preparation: 0.8s
+ Epoch: 15 (33.5s)  LR: 0.00056 Train Loss: 2.98  Valid Loss: 6.02  Valid NDCG: 0.4052
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 16 (33.8s)  LR: 0.00046 Train Loss: 2.90  Valid Loss: 6.04  Valid NDCG: 0.4469
+ Data Preparation: 0.8s
+ Epoch: 17 (33.4s)  LR: 0.00036 Train Loss: 2.81  Valid Loss: 5.83  Valid NDCG: 0.4279
+ Data Preparation: 0.8s
+ Epoch: 18 (33.5s)  LR: 0.00027 Train Loss: 2.71  Valid Loss: 6.32  Valid NDCG: 0.4241
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 19 (33.6s)  LR: 0.00019 Train Loss: 2.65  Valid Loss: 5.90  Valid NDCG: 0.4805
+ Data Preparation: 0.9s
+ Epoch: 20 (33.8s)  LR: 0.00012 Train Loss: 2.60  Valid Loss: 6.13  Valid NDCG: 0.4388
+ Data Preparation: 0.9s
+ Epoch: 21 (33.4s)  LR: 0.00006 Train Loss: 2.59  Valid Loss: 5.85  Valid NDCG: 0.4496
+ Data Preparation: 0.8s
+ Epoch: 22 (33.2s)  LR: 0.00002 Train Loss: 2.58  Valid Loss: 6.09  Valid NDCG: 0.4401
+ Data Preparation: 0.9s
+ Epoch: 23 (33.1s)  LR: 0.00000 Train Loss: 2.57  Valid Loss: 6.20  Valid NDCG: 0.4442
+ Data Preparation: 0.8s
+ Epoch: 24 (33.2s)  LR: 0.00000 Train Loss: 2.58  Valid Loss: 6.00  Valid NDCG: 0.4399
+ Data Preparation: 0.8s
+ Epoch: 25 (33.5s)  LR: 0.00003 Train Loss: 2.59  Valid Loss: 6.05  Valid NDCG: 0.4412
+ Data Preparation: 0.8s
+ Epoch: 26 (33.4s)  LR: 0.00007 Train Loss: 2.53  Valid Loss: 5.92  Valid NDCG: 0.4536
+ Data Preparation: 0.9s
+ Epoch: 27 (33.6s)  LR: 0.00012 Train Loss: 2.50  Valid Loss: 5.99  Valid NDCG: 0.4513
+ Data Preparation: 0.9s
+ Epoch: 28 (33.3s)  LR: 0.00020 Train Loss: 2.46  Valid Loss: 6.30  Valid NDCG: 0.4251
+ Data Preparation: 0.8s
+ Epoch: 29 (33.2s)  LR: 0.00028 Train Loss: 2.44  Valid Loss: 6.09  Valid NDCG: 0.4405
+ Data Preparation: 1.0s
+ Epoch: 30 (33.1s)  LR: 0.00038 Train Loss: 2.40  Valid Loss: 6.47  Valid NDCG: 0.4210
+ Data Preparation: 0.9s
+ Epoch: 31 (33.0s)  LR: 0.00048 Train Loss: 2.40  Valid Loss: 6.61  Valid NDCG: 0.4231
+ Data Preparation: 0.8s
+ Epoch: 32 (33.2s)  LR: 0.00058 Train Loss: 2.39  Valid Loss: 6.40  Valid NDCG: 0.4273
+ Data Preparation: 0.9s
+ Epoch: 33 (33.2s)  LR: 0.00067 Train Loss: 2.35  Valid Loss: 6.37  Valid NDCG: 0.4266
+ Data Preparation: 0.9s
+ Epoch: 34 (33.5s)  LR: 0.00076 Train Loss: 2.37  Valid Loss: 5.99  Valid NDCG: 0.4441
+ Data Preparation: 0.9s
+ Epoch: 35 (33.1s)  LR: 0.00084 Train Loss: 2.34  Valid Loss: 6.12  Valid NDCG: 0.4464
+ Data Preparation: 0.9s
+ Epoch: 36 (33.2s)  LR: 0.00091 Train Loss: 2.36  Valid Loss: 6.25  Valid NDCG: 0.4314
+ Data Preparation: 1.0s
+ Epoch: 37 (33.1s)  LR: 0.00096 Train Loss: 2.29  Valid Loss: 6.23  Valid NDCG: 0.4240
+ Data Preparation: 0.9s
+ Epoch: 38 (33.3s)  LR: 0.00099 Train Loss: 2.28  Valid Loss: 6.17  Valid NDCG: 0.4505
+ Data Preparation: 0.9s
+ Epoch: 39 (33.0s)  LR: 0.00100 Train Loss: 2.25  Valid Loss: 5.97  Valid NDCG: 0.4384
+ Data Preparation: 0.9s
+ Epoch: 40 (33.4s)  LR: 0.00099 Train Loss: 2.25  Valid Loss: 6.09  Valid NDCG: 0.4403
+ Data Preparation: 0.9s
+ Epoch: 41 (33.3s)  LR: 0.00096 Train Loss: 2.18  Valid Loss: 6.43  Valid NDCG: 0.4371
+ Data Preparation: 0.9s
+ Epoch: 42 (33.4s)  LR: 0.00092 Train Loss: 2.14  Valid Loss: 6.21  Valid NDCG: 0.4439
+ Data Preparation: 0.9s
+ Epoch: 43 (33.1s)  LR: 0.00085 Train Loss: 2.11  Valid Loss: 6.11  Valid NDCG: 0.4646
+ Data Preparation: 0.9s
+ Epoch: 44 (33.1s)  LR: 0.00077 Train Loss: 2.07  Valid Loss: 5.83  Valid NDCG: 0.4608
+ Data Preparation: 0.8s
+ Epoch: 45 (33.1s)  LR: 0.00068 Train Loss: 2.01  Valid Loss: 6.27  Valid NDCG: 0.4586
+ Data Preparation: 0.9s
+ Epoch: 46 (33.1s)  LR: 0.00059 Train Loss: 1.90  Valid Loss: 6.11  Valid NDCG: 0.4578
+ Data Preparation: 0.9s
+ UPDATE!!!
+ Epoch: 47 (33.2s)  LR: 0.00049 Train Loss: 1.85  Valid Loss: 6.36  Valid NDCG: 0.4867
+ Data Preparation: 0.9s
+ Epoch: 48 (33.6s)  LR: 0.00039 Train Loss: 1.79  Valid Loss: 5.98  Valid NDCG: 0.4738
+ Data Preparation: 0.9s
+ Epoch: 49 (33.3s)  LR: 0.00029 Train Loss: 1.75  Valid Loss: 6.58  Valid NDCG: 0.4327
+ Data Preparation: 0.9s
+ Epoch: 50 (33.2s)  LR: 0.00021 Train Loss: 1.70  Valid Loss: 6.48  Valid NDCG: 0.4480
+ {'paper_author_write_first': 14243, 'paper_field_L1': 39345, 'paper_field_L2': 77166, 'paper_field_L0': 20017, 'paper_field_L3': 27948, 'paper_venue_Journal': 8558, 'paper_field_L4': 9800, 'rev_paper_paper': 5118, 'paper_author_write_last': 12248, 'paper_field_L5': 5882, 'paper_venue_Conference': 10308, 'paper_author_write_other': 20542, 'paper_paper': 5064, 'paper_venue_Repository': 1132, 'paper_venue_Patent': 2, 'rev_paper_author_write_first': 14243, 'author_affiliation': 38299, 'rev_paper_author_write_last': 12248, 'rev_paper_author_write_other': 20542, 'rev_paper_venue_Conference': 10308, 'rev_paper_venue_Journal': 8558, 'rev_paper_venue_Patent': 2, 'rev_paper_venue_Repository': 1132, 'field_field': 88057, 'rev_field_field': 88057, 'rev_paper_field_L3': 27948, 'rev_paper_field_L5': 5882, 'rev_paper_field_L4': 9800, 'rev_paper_field_L2': 77166, 'rev_paper_field_L1': 39345, 'rev_paper_field_L0': 20017, 'rev_author_affiliation': 38299}
+ Last Test NDCG: 0.4493
+ Last Test MRR:  0.6209
+ Best Test NDCG: 0.4425
+ Best Test MRR:  0.6039
+ Done after 1780.8s
