@@ -28,16 +28,16 @@ def handle_attention(graph, attention, edges_attentions, edge_index, node_type, 
             edges_attentions[target_type][source_type][edge_type][target_id][source_id] = attention_sum
     return edges_attentions
 
-def remove_edges(graph, edges_attentions):
+def remove_edges(graph, edges_attentions, take=0.2):
     # TODO: Move to config
     relations = [
         {
             'from': {'target': 'paper', 'source': 'field'},
-            'take': 0.2
+            'take': take
         },
         {
             'from': {'target': 'paper', 'source': 'author'},
-            'take': 0.2
+            'take': take
         }
     ]
     edges_to_be_removed = []
@@ -63,18 +63,18 @@ def remove_edges(graph, edges_attentions):
     remove_edges_hgt(graph, edges_to_be_removed)
 
 
-def add_fake_edges(graph, edges_attentions):
+def add_fake_edges(graph, edges_attentions, take=0.2):
     # TODO: Move to config
     new_relations = [
         {
             'between': ['author', 'field'],
             'through': [{'target': 'paper', 'source': 'field'}, {'target': 'paper', 'source': 'author'}],
-            'take': 0.2
+            'take': take
         },
         {
             'between': ['author', 'field'],
             'through': [{'target': 'paper', 'source': 'venue'}, {'target': 'paper', 'source': 'author'}],
-            'take': 0.2
+            'take': take
         }
     ]
     action_edges = []

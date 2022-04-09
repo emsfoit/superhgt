@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(
     description='Training GNN on main_node - sub_node classification task')
 
 """Dataset arguments"""
-parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph20000.pk',
+parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph50000.pk',
                     help='The address of preprocessed graph.')
 parser.add_argument('--model_dir', type=str, default='output',
                     help='The address for storing the models and optimization results.')
@@ -75,7 +75,7 @@ parser.add_argument('--optimizer', type=str, default='adamw',
                     help='optimizer to use.')
 parser.add_argument('--data_percentage', type=float, default=1.0,
                     help='Percentage of training and validation data to use')
-parser.add_argument('--n_epoch', type=int, default=5,
+parser.add_argument('--n_epoch', type=int, default=50,
                     help='Number of epoch to run')
 parser.add_argument('--n_pool', type=int, default=4,
                     help='Number of process to sample subgraph')
@@ -87,9 +87,9 @@ parser.add_argument('--batch_size', type=int, default=256,
                     help='Number of output nodes for training')
 parser.add_argument('--clip', type=float, default=0.25,
                     help='Gradient Norm Clipping')
-parser.add_argument('--include_fake_edges', type=bool, default=False,
+parser.add_argument('--include_fake_edges', type=float, default=0.0,
                     help='Include fake edges')
-parser.add_argument('--remove_edges', type=bool, default=False,
+parser.add_argument('--remove_edges', type=float, default=0.0,
                     help='remove weak edges')
 parser.add_argument('--restructure_at_epoch', type=int, default=10,
                     help='restructure graph at after x epoch')
@@ -102,9 +102,14 @@ start_time = time.time()
 args = parser.parse_args()
 logger(args)
 
+# Create folder to save the model if it does not exist
+isExist = os.path.exists(args.model_dir)
+if not isExist:
+    os.umask(0)
+    os.makedirs(args.model_dir, mode=0o777)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# replace with read gRAPH
 graph = nx.read_gpickle(args.graph_dir)
 graph.graph['edge_list'] = get_edge_list(graph)
 logger(graph.graph['meta'])
@@ -312,7 +317,7 @@ edges_attentions = defaultdict( #target_type
 ))))
 for epoch in np.arange(args.n_epoch) + 1:
     if (args.include_fake_edges or args.remove_edges) and epoch == args.restructure_at_epoch + 1:
-        add_fake_edges(graph, edges_attentions) if args.include_fake_edges else remove_edges(graph, edges_attentions)
+        add_fake_edges(graph, edges_attentions, args.include_fake_edges) if args.include_fake_edges else remove_edges(graph, edges_attentions, args.remove_edges)
         
 
     """Prepare Training and Validation Data"""
