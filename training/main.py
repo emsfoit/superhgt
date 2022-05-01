@@ -31,17 +31,17 @@ parser = argparse.ArgumentParser(
     description='Training GNN on main_node - sub_node classification task')
 
 """Dataset arguments"""
-parser.add_argument('--graph_dir', type=str, default='output/graphs/OAG_graph50000.pk',
+parser.add_argument('--graph_dir', type=str, default='output/graphs/Reddit5000OAG_graph.pk',
                     help='The address of preprocessed graph.')
 parser.add_argument('--model_dir', type=str, default='output',
                     help='The address for storing the models and optimization results.')
-parser.add_argument('--graph_params_dir', type=str, default='config/HGT_graph_params_OAG.json',
+parser.add_argument('--graph_params_dir', type=str, default='config/HGT_graph_params_Reddit.json',
                     help='The address of the graph params file')
-parser.add_argument('--main_node', type=str, default='paper',
+parser.add_argument('--main_node', type=str, default='post',
                     help='The name of the main node in the graph')
-parser.add_argument('--predicted_node_name', type=str, default='field',
+parser.add_argument('--predicted_node_name', type=str, default='subreddit',
                     help='The name of the node that its values to be predicted')
-parser.add_argument('--edge_name', type=str, default='paper_field_L2',
+parser.add_argument('--edge_name', type=str, default='post_subreddit',
                     help='The name of edge')
 parser.add_argument('--exract_attention', type=bool, default=False,
                     help='extract the attention lists')
@@ -49,9 +49,9 @@ parser.add_argument('--show_tensor_board', type=bool, default=False,
                     help='show tensor board')
 
 """Model arguments """
-parser.add_argument('--multi_lable_task', type=bool, default=True,
+parser.add_argument('--multi_lable_task', type=bool, default=False,
                     help='Multi label classification task')
-parser.add_argument('--use_RTE', type=bool, default=True,
+parser.add_argument('--use_RTE', type=bool, default=False,
                     help='use RTE')
 parser.add_argument('--conv_name', type=str, default='hgt',
                     choices=['hgt', 'gcn', 'gat', 'rgcn', 'han', 'hetgnn'],
@@ -315,10 +315,14 @@ edges_attentions = defaultdict( #target_type
                 lambda: 0.0
             )
 ))))
+restructured = False
+time_to_restructure = False
 for epoch in np.arange(args.n_epoch) + 1:
-    if (args.include_fake_edges or args.remove_edges) and epoch == args.restructure_at_epoch + 1:
-        add_fake_edges(graph, edges_attentions, args.include_fake_edges) if args.include_fake_edges else remove_edges(graph, edges_attentions, args.remove_edges)
-        
+    if not restructured and time_to_restructure:
+        if (args.include_fake_edges or args.remove_edges) and epoch >= args.restructure_at_epoch + 1:
+            logger(f"Restructuring at epoch: {epoch} ..................")
+            add_fake_edges(graph, edges_attentions, args.include_fake_edges) if args.include_fake_edges else remove_edges(graph, edges_attentions, args.remove_edges)
+            restructured = True
 
     """Prepare Training and Validation Data"""
     train_data = [job.get() for job in jobs[:-1]]
@@ -390,6 +394,8 @@ for epoch in np.arange(args.n_epoch) + 1:
             torch.save(model, os.path.join(
                 args.model_dir, f'{args.main_node}_{args.predicted_node_name}_{args.conv_name}'))
             logger('UPDATE!!!')
+            if not time_to_restructure and epoch >= args.restructure_at_epoch + 1:
+                time_to_restructure = True
 
         st = time.time()
         logger(("Epoch: %d (%.1fs)  LR: %.5f Train Loss: %.2f  Valid Loss: %.2f  Valid NDCG: %.4f") %
